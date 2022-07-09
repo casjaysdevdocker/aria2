@@ -8,11 +8,11 @@ RUN apk -U upgrade && \
   nginx \
   aria2 && \
   rm -R /etc/nginx && \
-  mkdir -p /aria2/config /aria2/data /tmp/ariang && \
+  mkdir -p /aria2/config /aria2/data /tmp/ariang /usr/local/www/ariang && \
   cd /tmp/ariang && \
   curl -q -LSsf https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip -o /tmp/AriaNg-$ARIANG_VERSION.zip && \
   unzip /tmp/AriaNg-$ARIANG_VERSION.zip && \
-  rsync -ahP /tmp/ariang/.  /usr/local/www/ariang/ && \
+  rsync -ahP /tmp/ariang/. /usr/local/www/ariang/ && \
   rm -Rf /tmp/ariang
 
 # AriaNG
