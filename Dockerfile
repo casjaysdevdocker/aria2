@@ -43,7 +43,6 @@ WORKDIR /aria2
 VOLUME ["/aria2/data", "/aria2/config"]
 
 EXPOSE 6800
-EXPOSE 8080
 
 HEALTHCHECK CMD ["/usr/local/bin/entrypoint-aria2.sh", "healthcheck"]
 ENTRYPOINT ["/usr/local/bin/entrypoint-aria2.sh"]
