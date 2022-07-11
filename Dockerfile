@@ -1,12 +1,12 @@
-FROM casjaysdevdocker/alpine:latest AS build
+FROM casjaysdevdocker/nginx:latest AS build
 
 ENV ARIANG_VERSION=1.2.4 \
   DOMAIN=0.0.0.0:8080 
 
 RUN apk -U upgrade && \
   apk add --no-cache \
-  nginx \
-  aria2 && \
+  aria2 \
+  unzip && \
   rm -R /etc/nginx && \
   mkdir -p /aria2/config /aria2/data /tmp/ariang /usr/local/www/ariang && \
   cd /tmp/ariang && \
@@ -15,11 +15,10 @@ RUN apk -U upgrade && \
   rsync -ahP /tmp/ariang/. /usr/local/www/ariang/ && \
   rm -Rf /tmp/ariang
 
-# AriaNG
 WORKDIR /usr/local/www/ariang
 
-# config files
 COPY ./config/. /etc/
+COPY ./data/. /data/
 COPY ./bin/. /usr/local/bin/
 
 FROM build
