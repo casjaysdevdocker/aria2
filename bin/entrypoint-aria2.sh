@@ -88,7 +88,7 @@ healthcheck)
 
 bash | shell | sh)
   ARGS="$*"
-  exec /bin/bash ${ARGS:--l}
+  exec /bin/bash ${ARGS:-}
   ;;
 
 *)
