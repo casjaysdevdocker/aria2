@@ -1,13 +1,13 @@
 FROM casjaysdevdocker/nginx:latest as build
 
 ARG ARIANG_VERSION=1.2.4 \
-  DOMAIN=0.0.0.0:8080 
+  DOMAIN=0.0.0.0:8080
 
 
 RUN mkdir -p /bin/ /config/ /data/ && \
   rm -Rf /bin/.gitkeep /config/.gitkeep /data/.gitkeep && \
   apk -U update && \
-  apk add --no-cache \ 
+  apk add --no-cache \
   aria2 \
   unzip && \
   rm -R /etc/nginx && \
@@ -53,4 +53,4 @@ COPY --from=build /. /
 
 HEALTHCHECK CMD [ "/usr/local/bin/entrypoint-aria2.sh", "healthcheck" ]
 ENTRYPOINT [ "/usr/local/bin/entrypoint-aria2.sh" ]
-CMD [ "exec" ]
+
