@@ -1,10 +1,12 @@
-FROM casjaysdevdocker/nginx:latest AS build
+FROM casjaysdevdocker/nginx:latest as build
 
-ENV ARIANG_VERSION=1.2.4 \
+ARG ARIANG_VERSION=1.2.4 \
   DOMAIN=0.0.0.0:8080 
 
-RUN apk -U upgrade && \
-  apk add --no-cache \
+
+RUN mkdir -p /bin/.gitkeep /config/.gitkeep /data/.gitkeep && \
+  rm -Rf /bin/.gitkeep /config/.gitkeep /data/.gitkeep && \
+  apk update && \
   aria2 \
   unzip && \
   rm -R /etc/nginx && \
@@ -21,27 +23,33 @@ COPY ./config/. /etc/
 COPY ./data/. /data/
 COPY ./bin/. /usr/local/bin/
 
-FROM build
-ARG BUILD_DATE="$(date +'%Y-%m-%d %H:%M')" 
+FROM scratch
+ARG BUILD_DATE="$(date +'%Y-%m-%d %H:%M')"
 
-LABEL \
-  org.label-schema.name="aria2" \
+LABEL org.label-schema.name="aria2" \
   org.label-schema.description="Aria2 downloader and AriaNg webui Docker image based on Alpine Linux" \
-  org.label-schema.url="https://hub.docker.com/r/casjaysdevdocker/aria2" \
-  org.label-schema.vcs-url="https://github.com/casjaysdevdocker/aria2" \
+  org.label-schema.url="https://github.com/casjaysdevdocker/aria2/aria2" \
+  org.label-schema.vcs-url="https://github.com/casjaysdevdocker/aria2/aria2" \
   org.label-schema.build-date=$BUILD_DATE \
   org.label-schema.version=$BUILD_DATE \
   org.label-schema.vcs-ref=$BUILD_DATE \
   org.label-schema.license="WTFPL" \
   org.label-schema.vcs-type="Git" \
-  org.label-schema.schema-version="1.0" \
+  org.label-schema.schema-version="latest" \
   org.label-schema.vendor="CasjaysDev" \
-  maintainer="CasjaysDev <docker-admin@casjaysdev.com>" 
+  maintainer="CasjaysDev <docker-admin@casjaysdev.com>"
+
+ENV SHELL="/bin/bash" \
+  TERM="xterm-256color" \
+  HOSTNAME="casjaysdev-aria2" \
+  TZ="${TZ:-America/New_York}"
 
 WORKDIR /aria2
 VOLUME ["/aria2/data", "/aria2/config"]
-
 EXPOSE 6800
 
-HEALTHCHECK CMD ["/usr/local/bin/entrypoint-aria2.sh", "healthcheck"]
-ENTRYPOINT ["/usr/local/bin/entrypoint-aria2.sh"]
+COPY --from=build /. /
+
+HEALTHCHECK CMD [ "/usr/local/bin/entrypoint-aria2.sh", "healthcheck" ]
+ENTRYPOINT [ "/usr/local/bin/entrypoint-aria2.sh" ]
+CMD [ "/usr/bin/bash", "-c" ]
