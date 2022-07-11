@@ -6,7 +6,8 @@ ARG ARIANG_VERSION=1.2.4 \
 
 RUN mkdir -p /bin/.gitkeep /config/.gitkeep /data/.gitkeep && \
   rm -Rf /bin/.gitkeep /config/.gitkeep /data/.gitkeep && \
-  apk update && \
+  apk -U update && \
+  apk add --no-cache \ 
   aria2 \
   unzip && \
   rm -R /etc/nginx && \
