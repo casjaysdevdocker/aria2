@@ -4,7 +4,7 @@ ARG ARIANG_VERSION=1.2.4 \
   DOMAIN=0.0.0.0:8080 
 
 
-RUN mkdir -p /bin/.gitkeep /config/.gitkeep /data/.gitkeep && \
+RUN mkdir -p /bin/ /config/ /data/ && \
   rm -Rf /bin/.gitkeep /config/.gitkeep /data/.gitkeep && \
   apk -U update && \
   apk add --no-cache \ 
