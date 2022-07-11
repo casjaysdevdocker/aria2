@@ -53,4 +53,4 @@ COPY --from=build /. /
 
 HEALTHCHECK CMD [ "/usr/local/bin/entrypoint-aria2.sh", "healthcheck" ]
 ENTRYPOINT [ "/usr/local/bin/entrypoint-aria2.sh" ]
-CMD [ "/usr/bin/bash", "-c" ]
+CMD [ "exec" ]
