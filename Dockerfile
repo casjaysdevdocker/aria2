@@ -1,4 +1,4 @@
-FROM casjaysdevdocker/alpine:latest as build
+FROM casjaysdevdocker/nginx:latest as build
 
 ARG LICENSE=WTFPL \
   IMAGE_NAME=aria2 \
