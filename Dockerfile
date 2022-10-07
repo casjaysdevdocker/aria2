@@ -61,6 +61,6 @@ EXPOSE $PORT
 
 COPY --from=build /. /
 
-HEALTHCHECK CMD ["/usr/local/bin/entrypoint-aria2.sh", "healthcheck"]
+HEALTHCHECK --interval=15s --timeout=3s CMD ["/usr/local/bin/entrypoint-aria2.sh", "healthcheck"]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint-aria2.sh"]
