@@ -14,16 +14,16 @@
 # @Resource          :
 # @sudo/root         :  no
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Set bash options
+[ -n "$DEBUG" ] && set -x
+set -o pipefail
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 APPNAME="$(basename "$0" 2>/dev/null)"
 VERSION="202207112232-git"
 HOME="${USER_HOME:-$HOME}"
 USER="${SUDO_USER:-$USER}"
 RUN_USER="${SUDO_USER:-$USER}"
 SRC_DIR="${BASH_SOURCE%/*}"
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Set bash options
-if [[ "$1" == "--debug" ]]; then shift 1 && set -xo pipefail && export SCRIPT_OPTS="--debug" && export _DEBUG="on"; fi
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set functions
 __exec_bash() {
