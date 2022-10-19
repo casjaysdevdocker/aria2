@@ -1,7 +1,7 @@
 FROM casjaysdevdocker/alpine:latest AS build
 
 ARG ALPINE_VERSION="v3.16"
-ARG ARIANG_VERSION="1.2.4 "
+ARG ARIANG_VERSION="1.2.4"
 
 ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data" \
   DEFAULT_CONF_DIR="/usr/local/share/template-files/config" \
@@ -30,7 +30,7 @@ RUN set -ex; \
   unzip /tmp/AriaNg-$ARIANG_VERSION.zip && \
   mkdir -p /var/www/ariang && \
   rsync -ahP /tmp/ariang/. /var/www/ariang/ && \
-  rm -Rf /tmp/ariang /tmp/AriaNg-$ARIANG_VERSION.zip
+  rm -Rf /tmp/ariang /tmp/AriaNg-$ARIANG_VERSION.zip /etc/nginx/.
 
 RUN echo 'Running cleanup' ; \
   rm -Rf /usr/share/doc/* /usr/share/info/* /tmp/* /var/tmp/* ; \
