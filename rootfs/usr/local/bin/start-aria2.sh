@@ -72,7 +72,7 @@ CONTAINER_IP_ADDRESS="$(ip a 2>/dev/null | grep 'inet' | grep -v '127.0.0.1' | a
 # Overwrite variables
 SERVICE_PORT="${ARIA2RPCPORT:-8080}"
 SERVICE_NAME="aria2"
-SERVICE_COMMAND="aria2c --conf-path=/etc/aria2.conf"
+SERVICE_COMMAND="aria2c --conf-path=/config/aria2/aria2.conf"
 export exec_message="Starting $SERVICE_NAME on $CONTAINER_IP_ADDRESS:$SERVICE_PORT"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Pre copy commands
@@ -110,17 +110,17 @@ fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if [ -n "$RPC_SECRET" ]; then
   echo "Changing rpc secret to $RPC_SECRET"
-  grep -sq "rpc-secret=*" "/etc/aria2.conf" ||
-    echo "rpc-secret=$RPC_SECRET" >>"/etc/aria2.conf" ||
-    sed -i "s|rpc-secret=.*|rpc-secret=$RPC_SECRET|g" "/etc/aria2.conf"
+  grep -sq "rpc-secret=*" "/config/aria2.conf" ||
+    echo "rpc-secret=$RPC_SECRET" >>"/config/aria2.conf" ||
+    sed -i "s|rpc-secret=.*|rpc-secret=$RPC_SECRET|g" "/config/aria2.conf"
   sed -i "s|secret: |secret: $RPC_SECRET|g" "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # allow Changing of port [unsupported]
 if [ -n "$SERVICE_PORT" ] && [ "$SERVICE_PORT" != "8080" ]; then
   echo "Changing rpc request port to $SERVICE_PORT"
-  sed -i "s|8080|${SERVICE_PORT}|g" "/etc/nginx/nginx.conf"
-  sed -i "ss|8080|${SERVICE_PORT}|g" "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
+  sed -i "s|rpc-listen-port=.*|rpc-listen-port=${SERVICE_PORT}|g" "/config/nginx/nginx.conf"
+  sed -i "s|rpcPort: *,|rpcPort: ''${SERVICE_PORT}'',|g" "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Initialized
