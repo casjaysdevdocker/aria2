@@ -72,7 +72,7 @@ CONTAINER_IP_ADDRESS="$(ip a 2>/dev/null | grep 'inet' | grep -v '127.0.0.1' | a
 # Overwrite variables
 SERVICE_PORT="6800"
 SERVICE_NAME="nginx"
-SERVICE_COMMAND="nginx -g 'daemon off;' -c /etc/nginx/nginx.conf"
+SERVICE_COMMAND="nginx -c /etc/nginx/nginx.conf"
 export exec_message="Starting $SERVICE_NAME on $CONTAINER_IP_ADDRESS:$SERVICE_PORT"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Pre copy commands
