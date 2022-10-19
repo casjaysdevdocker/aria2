@@ -26,10 +26,8 @@ RUN set -ex; \
   echo "http://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/community" >>"/etc/apk/repositories"; \
   if [ "${ALPINE_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST} && \
-  mkdir -p /tmp/ariang /var/www/ariang && \
   curl -q -LSsf https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip -o /tmp/AriaNg-$ARIANG_VERSION.zip && \
-  cd /tmp/ariang && unzip /tmp/AriaNg-$ARIANG_VERSION.zip -d /tmp/ariang && \
-  rsync -ahP /tmp/ariang/. /var/www/ariang/ 
+  mkdir -p /var/www/ariang && unzip /tmp/AriaNg-$ARIANG_VERSION.zip -d /var/www/ariang 
 
 RUN echo 'Running cleanup' ; \
   rm -Rf /usr/share/doc/* /usr/share/info/* /tmp/* /var/tmp/* /etc/nginx/* ; \
