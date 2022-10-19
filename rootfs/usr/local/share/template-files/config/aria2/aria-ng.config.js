@@ -524,10 +524,10 @@
         titleRefreshInterval: 5e3,
         browserNotification: !1,
         rpcAlias: '',
-        rpcHost: 'localhost',
+        rpcHost: '127.0.0.1',
         rpcPort: '8080',
         rpcInterface: 'jsonrpc',
-        protocol: 'ws',
+        protocol: 'http',
         httpMethod: 'POST',
         secret: '',
         extendRpcServers: [],
@@ -2106,7 +2106,7 @@
         'rpc-listen-port': {
           type: 'integer',
           readonly: !0,
-          defaultValue: '6080',
+          defaultValue: '8080',
         },
         'rpc-max-request-size': {
           type: 'string',
@@ -2161,7 +2161,7 @@
           type: 'option',
           options: ['debug', 'info', 'notice', 'warn', 'error'],
           readonly: !0,
-          defaultValue: 'notice',
+          defaultValue: 'warn',
         },
         'content-disposition-default-utf8': {
           since: '1.31.0',
