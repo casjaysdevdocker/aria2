@@ -105,9 +105,10 @@ fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Post copy commands
 if [ -f "/config/aria2/aria-ng.config.js" ]; then
-  get_config="$(ls -A /var/www/ariang/js/aria-ng-*.min.js | head -n1)"
+  get_config="$(ls -A /var/www/ariang/js/aria-ng-*.min.js | grep -v 'f1dd57abb9.min' | head -n1)"
   rm -Rf "$get_config"
   ln -sf "/config/aria2/aria-ng.config.js" "$get_config"
+  ln -sf "/config/aria2/aria-ng.config.js" "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if [ -n "$RPC_SECRET" ]; then
