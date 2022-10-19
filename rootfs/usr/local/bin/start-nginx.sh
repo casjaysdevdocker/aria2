@@ -70,7 +70,7 @@ CONTAINER_IP_ADDRESS="$(ip a 2>/dev/null | grep 'inet' | grep -v '127.0.0.1' | a
 [ "$HTTPS_PORT" = "443" ] && HTTP_PORT="$HTTPS_PORT" && SSL_ENABLED="true"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Overwrite variables
-SERVICE_PORT="6800"
+SERVICE_PORT="${ARIA2RPCPORT:-6800}"
 SERVICE_NAME="nginx"
 SERVICE_COMMAND="nginx -c /etc/nginx/nginx.conf"
 export exec_message="Starting $SERVICE_NAME on $CONTAINER_IP_ADDRESS:$SERVICE_PORT"
@@ -103,7 +103,11 @@ if [ "$DATA_DIR_INITIALIZED" = "false" ] && [ -d "$DEFAULT_DATA_DIR/data/htdocs"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Post copy commands
-
+# allow Changing of port [unsupported]
+if [ -n "$SERVICE_PORT" ] && [ "$SERVICE_PORT" != "6800" ]; then
+  echo "Changing rpc request port to $SERVICE_PORT"
+  sed -i "s|listen       .*|listen                               ${SERVICE_PORT}|g" "/config/nginx/nginx.conf"
+fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Initialized
 [ -d "/data" ] && touch "/data/.docker_has_run"
