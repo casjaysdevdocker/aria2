@@ -30,7 +30,7 @@ RUN set -ex; \
   curl -q -LSsf https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip -o /tmp/AriaNg-$ARIANG_VERSION.zip && \
   unzip /tmp/AriaNg-$ARIANG_VERSION.zip && \
   rsync -ahP /tmp/ariang/. /var/www/ariang/ && \
-  rm -Rf /tmp/ariang /tmp/AriaNg-$ARIANG_VERSION.zip /etc/nginx/.
+  rm -Rf /tmp/ariang /tmp/AriaNg-$ARIANG_VERSION.zip /etc/nginx/*
 
 RUN echo 'Running cleanup' ; \
   rm -Rf /usr/share/doc/* /usr/share/info/* /tmp/* /var/tmp/* ; \
