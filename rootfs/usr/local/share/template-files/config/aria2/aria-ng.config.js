@@ -519,13 +519,13 @@
       })
       .constant('ariaNgDefaultOptions', {
         language: 'en',
-        theme: 'light',
+        theme: 'dark',
         title: '${downspeed}, ${upspeed} - ${title}',
         titleRefreshInterval: 5e3,
         browserNotification: !1,
         rpcAlias: '',
         rpcHost: 'localhost',
-        rpcPort: '6800',
+        rpcPort: '8080',
         rpcInterface: 'jsonrpc',
         protocol: 'ws',
         httpMethod: 'POST',
