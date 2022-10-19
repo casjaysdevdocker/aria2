@@ -2161,7 +2161,7 @@
           type: 'option',
           options: ['debug', 'info', 'notice', 'warn', 'error'],
           readonly: !0,
-          defaultValue: 'warn',
+          defaultValue: 'error',
         },
         'content-disposition-default-utf8': {
           since: '1.31.0',
