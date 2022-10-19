@@ -26,14 +26,13 @@ RUN set -ex; \
   echo "http://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/community" >>"/etc/apk/repositories"; \
   if [ "${ALPINE_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST} && \
-  mkdir -p /tmp/ariang /var/www/ariang && \
+  cd /tmp && mkdir -p /tmp/ariang /var/www/ariang && \
   curl -q -LSsf https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip -o /tmp/AriaNg-$ARIANG_VERSION.zip && \
   unzip /tmp/AriaNg-$ARIANG_VERSION.zip && \
-  rsync -ahP /tmp/ariang/. /var/www/ariang/ && \
-  rm -Rf /tmp/ariang /tmp/AriaNg-$ARIANG_VERSION.zip /etc/nginx/*
+  rsync -ahP /tmp/ariang/. /var/www/ariang/ 
 
 RUN echo 'Running cleanup' ; \
-  rm -Rf /usr/share/doc/* /usr/share/info/* /tmp/* /var/tmp/* ; \
+  rm -Rf /usr/share/doc/* /usr/share/info/* /tmp/* /var/tmp/* /etc/nginx/* ; \
   rm -Rf /usr/local/bin/.gitkeep /usr/local/bin/.gitkeep /config /data /var/cache/apk/* ; \
   rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
   rm -rf /etc/systemd/system/*.wants/* ; \
