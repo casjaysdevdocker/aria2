@@ -104,17 +104,20 @@ if [ "$DATA_DIR_INITIALIZED" = "false" ] && [ -d "$DEFAULT_DATA_DIR/data/htdocs"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Post copy commands
-if [ -f "/config/aria2/aria-ng-f1dd57abb9.min.js" ]; then
-  rm -Rf "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
-  ln -sf "/config/aria2/aria-ng-f1dd57abb9.min.js" "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
+if [ -f "/config/aria2/aria-ng.config.js" ]; then
+  get_config="$(ls -A /var/www/ariang/js/aria-ng-*.min.js | head -n1)"
+  rm -Rf "$get_config"
+  ln -sf "/config/aria2/aria-ng.config.js" "$get_config"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if [ -n "$RPC_SECRET" ]; then
   echo "Changing rpc secret to $RPC_SECRET"
-  grep -sq "rpc-secret=*" "/config/aria2/aria2.conf" ||
-    echo "rpc-secret=$RPC_SECRET" >>"/config/aria2/aria2.conf" ||
+  if grep -sq "rpc-secret=*" "/config/aria2/aria2.conf"; then
+    sed -i "s|secret: '',|secret: ''$RPC_SECRET'',|g" "/var/www/ariang/js/aria-ng.config.js"
     sed -i "s|rpc-secret=.*|rpc-secret=$RPC_SECRET|g" "/config/aria2/aria2.conf"
-  sed -i "s|secret: |secret: $RPC_SECRET|g" "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
+  else
+    echo "rpc-secret=$RPC_SECRET" >>"/config/aria2/aria2.conf"
+  fi
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Initialized
