@@ -523,7 +523,7 @@
         title: '${downspeed}, ${upspeed} - ${title}',
         titleRefreshInterval: 5e3,
         browserNotification: !1,
-        rpcAlias: '',
+        rpcAlias: 'aria2',
         rpcHost: '127.0.0.1',
         rpcPort: '8080',
         rpcInterface: 'jsonrpc',

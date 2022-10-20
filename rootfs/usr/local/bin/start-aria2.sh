@@ -109,6 +109,7 @@ if [ -f "/config/aria2/aria-ng.config.js" ]; then
   rm -Rf "$get_config"
   ln -sf "/config/aria2/aria-ng.config.js" "$get_config"
   ln -sf "/config/aria2/aria-ng.config.js" "/var/www/ariang/js/aria-ng-f1dd57abb9.min.js"
+  [ -n "$CONTAINER_IP_ADDRESS" ] && sed "s|127.0.0.1|$CONTAINER_IP_ADDRESS|g" "/config/aria2/aria-ng.config.js"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if [ -n "$RPC_SECRET" ]; then
