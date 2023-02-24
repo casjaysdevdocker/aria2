@@ -39,7 +39,7 @@ __certbot() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __heath_check() {
   local healthStatus=0 health="Good"
-  #__pgrep ${1:-$SERVICE_NAME} &>/dev/null || healthStatus=$((healthStatus + 1))
+  __pgrep ${1:-$SERVICE_NAME} &>/dev/null || healthStatus=$((healthStatus + 1))
   #__curl "http://localhost:$SERVICE_PORT/server-health" || healthStatus=$((healthStatus + 1))
   [ "$healthStatus" -eq 0 ] || health="Errors reported see docker logs --follow $CONTAINER_NAME"
   return $healthStatus
@@ -87,7 +87,7 @@ __start_message() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __exec_pre_start() {
   __start_message
-  nginx -c /etc/nginx/nginx.conf
+  __exec_command nginx -c /etc/nginx/nginx.conf
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __run_backup() {

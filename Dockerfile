@@ -3,7 +3,7 @@ ARG LICENSE="MIT"
 ARG IMAGE_NAME="aria2"
 ARG PHP_SERVER="aria2"
 ARG TIMEZONE="America/New_York"
-ARG BUILD_DATE="Fri Feb 24 03:55:13 AM EST 2023"
+ARG BUILD_DATE="Fri Feb 24 04:58:11 AM EST 2023"
 ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data"
 ARG DEFAULT_CONF_DIR="/usr/local/share/template-files/config"
 ARG DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
@@ -65,14 +65,24 @@ RUN set -ex; \
   if [ "${DISTRO_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST}
 
-RUN curl -q -LSsf https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip -o /tmp/AriaNg-$ARIANG_VERSION.zip && \
-  mkdir -p /var/www/ariang && unzip /tmp/AriaNg-$ARIANG_VERSION.zip -d /var/www/ariang 
+RUN curl -q -LSsf "https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip" -o "/tmp/AriaNg-$ARIANG_VERSION.zip" && \
+  mkdir -p" /var/www/ariang" && unzip "/tmp/AriaNg-$ARIANG_VERSION.zip" -d "/var/www/ariang"
+
+RUN echo "$TIMEZONE" >"/etc/timezone" ; \
+  touch "/etc/profile" "/root/.profile" ; \
+  PHP_FPM="$(ls /usr/*bin/php*fpm* 2>/dev/null)" ; \
+  echo 'hosts: files dns' >"/etc/nsswitch.conf" ; \
+  [ -f "/etc/bash/bashrc" ] && cp -Rf "/etc/bash/bashrc" "/root" ; \
+  sed -i 's|root:x:.*|root:x:0:0:root:/root:/bin/bash|g' "/etc/passwd" ; \
+  [ -f "/usr/share/zoneinfo/${TZ}" ] && ln -sf "/usr/share/zoneinfo/${TZ}" "/etc/localtime" ; \
+  [ -n "$PHP_FPM" ] && [ -z "$(type -P php-fpm)" ] && ln -sf "$PHP_FPM" "/usr/bin/php-fpm" ; \
+  rm -rf "/bin/sh" ; BASH_CMD="$(type -P bash)" ; [ -f "$BASH_CMD" ] && ln -sf "$BASH_CMD" "/bin/sh" ; \
+  printf '# Profile\n\n%s\n%s\n%s\n' '. /etc/profile' '. /root/.profile' "alias quit='exit 0 2>/dev/null'" >"/root/.bashrc" ; \
+  if [ -f "/etc/profile.d/color_prompt.sh.disabled" ]; then mv -f "/etc/profile.d/color_prompt.sh.disabled" "/etc/profile.d/color_prompt.sh"; fi
 
 RUN echo 'Running cleanup' ; \
-  BASH_CMD="$(type -P bash)" ; \
   rm -rf /etc/systemd/system/*.wants/* ; \
   rm -rf /lib/systemd/system/systemd-update-utmp* ; \
-  [ -f "BASH_CMD" ] && ln -sf $BASH_CMD /usr/bin/sh ; \
   rm -rf /lib/systemd/system/local-fs.target.wants/* ; \
   rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
   rm -rf /lib/systemd/system/sockets.target.wants/*udev* ; \
@@ -101,7 +111,7 @@ ARG DISTRO_VERSION
 ARG PHP_VERSION
 
 USER ${USER}
-WORKDIR /data/aria2
+WORKDIR /root
 
 LABEL maintainer="CasjaysDev <docker-admin@casjaysdev.com>"
 LABEL org.opencontainers.image.vendor="CasjaysDev"
