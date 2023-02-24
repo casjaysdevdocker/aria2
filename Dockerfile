@@ -1,92 +1,140 @@
-FROM casjaysdevdocker/alpine:latest AS build
+# Docker image for aria2 using alpine template
+ARG LICENSE="MIT"
+ARG IMAGE_NAME="aria2"
+ARG PHP_SERVER="aria2"
+ARG TIMEZONE="America/New_York"
+ARG BUILD_DATE="Fri Feb 24 03:55:13 AM EST 2023"
+ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data"
+ARG DEFAULT_CONF_DIR="/usr/local/share/template-files/config"
+ARG DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
 
-ARG ALPINE_VERSION="v3.16"
+ARG SERVICE_PORT="6800"
+ARG EXPOSE_PORTS="6800"
+ARG PHP_VERSION=""
+ARG NODE_VERSION="system"
+ARG NODE_MANAGER="system"
 ARG ARIANG_VERSION="1.2.4"
 
-ARG DEFAULT_DATA_DIR="/usr/local/share/template-files/data" \
-  DEFAULT_CONF_DIR="/usr/local/share/template-files/config" \
-  DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
+ARG USER="root"
+ARG DISTRO_VERSION="3.17"
+ARG CONTAINER_VERSION="latest"
+ARG IMAGE_VERSION="${DISTRO_VERSION}"
+ARG BUILD_VERSION="${DISTRO_VERSION}"
 
-ARG PACK_LIST="bash aria2 unzip nginx"
+FROM casjaysdevdocker/alpine:${IMAGE_VERSION} AS build
+ARG USER
+ARG LICENSE
+ARG TIMEZONE
+ARG IMAGE_NAME
+ARG PHP_SERVER
+ARG BUILD_DATE
+ARG SERVICE_PORT
+ARG EXPOSE_PORTS
+ARG NODE_VERSION
+ARG NODE_MANAGER
+ARG BUILD_VERSION
+ARG DEFAULT_DATA_DIR
+ARG DEFAULT_CONF_DIR
+ARG DEFAULT_TEMPLATE_DIR
+ARG DISTRO_VERSION
+ARG PHP_VERSION
+ARG ARIANG_VERSION
 
-ENV LANG=en_US.utf8 \
-  ENV=ENV=~/.bashrc \
-  TZ="America/New_York" \
-  SHELL="/bin/sh" \
-  TERM="xterm-256color" \
-  TIMEZONE="${TZ:-$TIMEZONE}" \
-  HOSTNAME="casjaysdev-aria2"
+ARG PACK_LIST="bash iproute2 bash-completion ssmtp openssl wget curl jq ca-certificates tzdata mailcap \
+  git ncurses util-linux pciutils usbutils coreutils binutils findutils grep iproute2 sudo rsync zip certbot tini \
+  aria2 unzip nginx"
 
+ENV ENV=~/.bashrc
+ENV LANG=en_US.UTF-8
+ENV TZ="America/New_York"
+ENV SHELL="/bin/sh"
+ENV TERM="xterm-256color"
+ENV TIMEZONE="${TZ:-$TIMEZONE}"
+ENV HOSTNAME="casjaysdev-aria2"
+
+USER ${USER}
 COPY ./rootfs/. /
 
 RUN set -ex; \
   rm -Rf "/etc/apk/repositories"; \
+  [ "$DISTRO_VERSION" = "latest" ] && DISTRO_VERSION="edge"; \
+  [ "$DISTRO_VERSION" = "edge" ] || DISTRO_VERSION="v${DISTRO_VERSION}" ; \
   mkdir -p "${DEFAULT_DATA_DIR}" "${DEFAULT_CONF_DIR}" "${DEFAULT_TEMPLATE_DIR}"; \
-  echo "http://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/main" >>"/etc/apk/repositories"; \
-  echo "http://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/community" >>"/etc/apk/repositories"; \
-  if [ "${ALPINE_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${ALPINE_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
-  apk update --update-cache && apk add --no-cache ${PACK_LIST} && \
-  curl -q -LSsf https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip -o /tmp/AriaNg-$ARIANG_VERSION.zip && \
+  echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/main" >>"/etc/apk/repositories"; \
+  echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/community" >>"/etc/apk/repositories"; \
+  if [ "${DISTRO_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
+  apk update --update-cache && apk add --no-cache ${PACK_LIST}
+
+RUN curl -q -LSsf https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip -o /tmp/AriaNg-$ARIANG_VERSION.zip && \
   mkdir -p /var/www/ariang && unzip /tmp/AriaNg-$ARIANG_VERSION.zip -d /var/www/ariang 
 
 RUN echo 'Running cleanup' ; \
-  rm -Rf /usr/share/doc/* /usr/share/info/* /tmp/* /var/tmp/* /etc/nginx/* ; \
-  rm -Rf /usr/local/bin/.gitkeep /usr/local/bin/.gitkeep /config /data /var/cache/apk/* ; \
-  rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
+  BASH_CMD="$(type -P bash)" ; \
   rm -rf /etc/systemd/system/*.wants/* ; \
+  rm -rf /lib/systemd/system/systemd-update-utmp* ; \
+  [ -f "BASH_CMD" ] && ln -sf $BASH_CMD /usr/bin/sh ; \
   rm -rf /lib/systemd/system/local-fs.target.wants/* ; \
+  rm -rf /lib/systemd/system/multi-user.target.wants/* ; \
   rm -rf /lib/systemd/system/sockets.target.wants/*udev* ; \
   rm -rf /lib/systemd/system/sockets.target.wants/*initctl* ; \
+  rm -Rf /usr/share/doc/* /usr/share/info/* /tmp/* /var/tmp/* ; \
   rm -rf /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup* ; \
-  rm -rf /lib/systemd/system/systemd-update-utmp* ; \
+  rm -Rf /usr/local/bin/.gitkeep /usr/local/bin/.gitkeep /config /data /var/cache/apk/* ; \
   if [ -d "/lib/systemd/system/sysinit.target.wants" ]; then cd "/lib/systemd/system/sysinit.target.wants" && rm $(ls | grep -v systemd-tmpfiles-setup) ; fi
 
 FROM scratch
+ARG USER
+ARG LICENSE
+ARG TIMEZONE
+ARG IMAGE_NAME
+ARG PHP_SERVER
+ARG BUILD_DATE
+ARG SERVICE_PORT
+ARG EXPOSE_PORTS
+ARG NODE_VERSION
+ARG NODE_MANAGER
+ARG BUILD_VERSION
+ARG DEFAULT_DATA_DIR
+ARG DEFAULT_CONF_DIR
+ARG DEFAULT_TEMPLATE_DIR
+ARG DISTRO_VERSION
+ARG PHP_VERSION
 
-ARG \
-  SERVICE_PORT="6800" \
-  EXPOSE_PORTS="6800" \
-  PHP_SERVER="aria2" \
-  NODE_VERSION="system" \
-  NODE_MANAGER="system" \
-  BUILD_VERSION="latest" \
-  LICENSE="MIT" \
-  IMAGE_NAME="aria2" \
-  BUILD_DATE="Wed Oct 19 05:13:52 PM EDT 2022" \
-  TIMEZONE="America/New_York"
+USER ${USER}
+WORKDIR /data/aria2
 
-LABEL maintainer="CasjaysDev <docker-admin@casjaysdev.com>" \
-  org.opencontainers.image.vendor="CasjaysDev" \
-  org.opencontainers.image.authors="CasjaysDev" \
-  org.opencontainers.image.vcs-type="Git" \
-  org.opencontainers.image.name="${IMAGE_NAME}" \
-  org.opencontainers.image.base.name="${IMAGE_NAME}" \
-  org.opencontainers.image.license="${LICENSE}" \
-  org.opencontainers.image.vcs-ref="${BUILD_VERSION}" \
-  org.opencontainers.image.build-date="${BUILD_DATE}" \
-  org.opencontainers.image.version="${BUILD_VERSION}" \
-  org.opencontainers.image.schema-version="${BUILD_VERSION}" \
-  org.opencontainers.image.url="https://hub.docker.com/r/casjaysdevdocker/${IMAGE_NAME}" \
-  org.opencontainers.image.vcs-url="https://github.com/casjaysdevdocker/${IMAGE_NAME}" \
-  org.opencontainers.image.url.source="https://github.com/casjaysdevdocker/${IMAGE_NAME}" \
-  org.opencontainers.image.documentation="https://hub.docker.com/r/casjaysdevdocker/${IMAGE_NAME}" \
-  org.opencontainers.image.description="Containerized version of ${IMAGE_NAME}"
+LABEL maintainer="CasjaysDev <docker-admin@casjaysdev.com>"
+LABEL org.opencontainers.image.vendor="CasjaysDev"
+LABEL org.opencontainers.image.authors="CasjaysDev"
+LABEL org.opencontainers.image.vcs-type="Git"
+LABEL org.opencontainers.image.name="${IMAGE_NAME}"
+LABEL org.opencontainers.image.base.name="${IMAGE_NAME}"
+LABEL org.opencontainers.image.license="${LICENSE}"
+LABEL org.opencontainers.image.vcs-ref="${BUILD_VERSION}"
+LABEL org.opencontainers.image.build-date="${BUILD_DATE}"
+LABEL org.opencontainers.image.version="${BUILD_VERSION}"
+LABEL org.opencontainers.image.schema-version="${BUILD_VERSION}"
+LABEL org.opencontainers.image.url="https://hub.docker.com/r/casjaysdevdocker/${IMAGE_NAME}"
+LABEL org.opencontainers.image.vcs-url="https://github.com/casjaysdevdocker/${IMAGE_NAME}"
+LABEL org.opencontainers.image.url.source="https://github.com/casjaysdevdocker/${IMAGE_NAME}"
+LABEL org.opencontainers.image.documentation="https://hub.docker.com/r/casjaysdevdocker/${IMAGE_NAME}"
+LABEL org.opencontainers.image.description="Containerized version of ${IMAGE_NAME}"
+LABEL com.github.containers.toolbox="false"
 
-ENV LANG=en_US.utf8 \
-  ENV=~/.bashrc \
-  SHELL="/bin/bash" \
-  PORT="${SERVICE_PORT}" \
-  TERM="xterm-256color" \
-  PHP_SERVER="${PHP_SERVER}" \
-  CONTAINER_NAME="${IMAGE_NAME}" \
-  TZ="${TZ:-America/New_York}" \
-  TIMEZONE="${TZ:-$TIMEZONE}" \
-  HOSTNAME="casjaysdev-${IMAGE_NAME}"
+ENV ENV=~/.bashrc
+ENV LANG=en_US.UTF-8
+ENV SHELL="/bin/bash"
+ENV PORT="${SERVICE_PORT}"
+ENV TERM="xterm-256color"
+ENV PHP_SERVER="${PHP_SERVER}"
+ENV PHP_VERSION="${PHP_VERSION}"
+ENV CONTAINER_NAME="${IMAGE_NAME}"
+ENV TZ="${TZ:-America/New_York}"
+ENV TIMEZONE="${TZ:-$TIMEZONE}"
+ENV HOSTNAME="casjaysdev-${IMAGE_NAME}"
+ENV USER="${USER}"
 
 COPY --from=build /. /
-
-USER root
-WORKDIR /data/aria2
 
 VOLUME [ "/config","/data" ]
 
