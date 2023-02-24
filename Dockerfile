@@ -66,7 +66,7 @@ RUN set -ex; \
   apk update --update-cache && apk add --no-cache ${PACK_LIST}
 
 RUN curl -q -LSsf "https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip" -o "/tmp/AriaNg-$ARIANG_VERSION.zip" && \
-  mkdir -p" /var/www/ariang" && unzip "/tmp/AriaNg-$ARIANG_VERSION.zip" -d "/var/www/ariang"
+  mkdir -p "/var/www/ariang" && unzip "/tmp/AriaNg-$ARIANG_VERSION.zip" -d "/var/www/ariang"
 
 RUN echo "$TIMEZONE" >"/etc/timezone" ; \
   touch "/etc/profile" "/root/.profile" ; \
