@@ -26,7 +26,7 @@ WORKDIR=""                                        # set working directory
 SERVICE_UID="0"                                   # set the user id
 SERVICE_USER="root"                               # execute command as another user
 SERVICE_PORT=""                                   # port which service is listening on
-EXEC_CMD_BIN="aria2"                              # command to execute
+EXEC_CMD_BIN="aria2c"                             # command to execute
 EXEC_CMD_ARGS="--conf-path=/etc/aria2/aria2.conf" # command arguments
 PRE_EXEC_MESSAGE=""                               # Show message before execute
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
