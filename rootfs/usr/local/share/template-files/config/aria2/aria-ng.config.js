@@ -525,7 +525,7 @@
         browserNotification: !1,
         rpcAlias: 'aria2',
         rpcHost: '127.0.0.1',
-        rpcPort: 'ARIA_RPC_PORT',
+        rpcPort: '8000',
         rpcInterface: 'jsonrpc',
         protocol: 'http',
         httpMethod: 'POST',

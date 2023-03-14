@@ -54,10 +54,10 @@ SERVICE_UID="0"     # set the user id for creation of user
 SERVICE_PORT=""     # specifiy port which service is listening on
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Healthcheck variables
-HEALTH_ENABLED="yes" # enable healthcheck [yes/no]
-SERVICES_LIST="tini" # comma seperated list of processes for the healthcheck
-SERVER_PORTS=""      # ports : 80,443
-HEALTH_ENDPOINTS=""  # url endpoints: [http://localhost/health,http://localhost/test]
+HEALTH_ENABLED="yes"              # enable healthcheck [yes/no]
+SERVICES_LIST="tini,nginx,aria2c" # comma seperated list of processes for the healthcheck
+SERVER_PORTS="80"                 # ports : 80,443
+HEALTH_ENDPOINTS=""               # url endpoints: [http://localhost/health,http://localhost/test]
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional
 PHP_INI_DIR="${PHP_INI_DIR:-$(__find_php_ini)}"
@@ -73,24 +73,7 @@ MONGODB_CONFIG_FILE="${MONGODB_CONFIG_FILE:-$(__find_mongodb_conf)}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Last thing to run before options
 __run_pre() {
-  if [ "$ENTRYPOINT_FIRST_RUN" = "false" ]; then # Run on initial creation
-    true
-  fi
-  if [ "$CONFIG_DIR_INITIALIZED" = "false" ]; then # Initial config
-    true
-  fi
-  if [ "$DATA_DIR_INITIALIZED" = "false" ]; then
-    true
-  fi
-  # End Initial config
-  if [ "$START_SERVICES" = "yes" ]; then # only run on start
-    true
-  fi # end run on start
-  # Run everytime container starts
-  # __certbot
-  # __create_ssl_cert
-  # __update_ssl_certs
-  # end
+
   return 0
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

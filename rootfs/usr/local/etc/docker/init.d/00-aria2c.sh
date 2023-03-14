@@ -32,7 +32,6 @@ EXEC_CMD_ARGS="--conf-path=/etc/aria2/aria2.conf" # command arguments
 PRE_EXEC_MESSAGE=""                               # Show message before execute
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Other variables that are needed
-ARIA2RPCPORT="${ARIA2RPCPORT:-8000}"
 etc_dir="/etc/aria2"
 conf_dir="/config/aria2"
 www_dir="/usr/local/share/ariang"
@@ -48,16 +47,11 @@ __update_conf_files() {
   cp -Rf "$conf_dir/." "$etc_dir/"
   ln -sf "/dev/stdout" "/var/log/aria2/aria2.log"
   ln -sf "$conf_dir/aria2.session" "$etc_dir/aria2.session"
-  __replace "ARIA_RPC_PORT" "$port" "$etc_dir/aria2.conf"
-  if [ -f "/config/nginx/nginx.conf" ]; then
-    __replace "127.0.0.1:.*/jsonrpc" "127.0.0.1:$port/jsonrpc" "/config/nginx/nginx.conf"
-  fi
   if [ -f "$etc_dir/aria-ng.config.js" ]; then
     rm -Rf "$get_config"
     ln -sf "$etc_dir/aria-ng.config.js" "$get_config"
     ln -sf "$etc_dir/aria-ng.config.js" "$www_dir/js/aria-ng-f1dd57abb9.min.js"
     __replace "127.0.0.1" "0.0.0.0" "$etc_dir/aria-ng.config.js"
-    __replace "ARIA_RPC_PORT" "$port" "$etc_dir/aria-ng.config.js"
   fi
   if [ -n "$RPC_SECRET" ]; then
     echo "Changing rpc secret to $RPC_SECRET"
