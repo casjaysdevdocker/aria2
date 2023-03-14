@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html
+SCRIPT_NAME="$(basename "$0" 2>/dev/null)"
 [ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -o pipefail -x$DEBUGGER_OPTIONS || set -o pipefail
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 export PATH="/usr/local/etc/docker/bin:/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin"
@@ -25,13 +26,13 @@ done
 WORKDIR=""                                        # set working directory
 SERVICE_UID="0"                                   # set the user id
 SERVICE_USER="root"                               # execute command as another user
-SERVICE_PORT=""                                   # port which service is listening on
+SERVICE_PORT="8000"                               # port which service is listening on
 EXEC_CMD_BIN="aria2c"                             # command to execute
 EXEC_CMD_ARGS="--conf-path=/etc/aria2/aria2.conf" # command arguments
 PRE_EXEC_MESSAGE=""                               # Show message before execute
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Other variables that are needed
-ARIA2RPCPORT="${ARIA2RPCPORT:-$SERVICE_PORT}"
+ARIA2RPCPORT="${ARIA2RPCPORT:-8000}"
 etc_dir="/etc/aria2"
 conf_dir="/config/aria2"
 www_dir="/usr/local/share/ariang"
@@ -40,14 +41,23 @@ get_config="$(find "$www_dir/js" -name 'aria-ng-*.min.js' | grep -v 'f1dd57abb9.
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # use this function to update config files - IE: change port
 __update_conf_files() {
+  local port="${SERVICE_PORT:-${ARIA2RPCPORT:-8000}}"
   [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   [ -d "$data_dir" ] || mkdir -p "$data_dir"
+  [ -d "/var/log/aria2" ] || mkdir -p "/var/log/aria2"
   cp -Rf "$conf_dir/." "$etc_dir/"
+  ln -sf "/dev/stdout" "/var/log/aria2/aria2.log"
+  ln -sf "$conf_dir/aria2.session" "$etc_dir/aria2.session"
+  __replace "ARIA_RPC_PORT" "$port" "$etc_dir/aria2.conf"
+  if [ -f "/config/nginx/nginx.conf" ]; then
+    __replace "127.0.0.1:.*/jsonrpc" "127.0.0.1:$port/jsonrpc" "/config/nginx/nginx.conf"
+  fi
   if [ -f "$etc_dir/aria-ng.config.js" ]; then
     rm -Rf "$get_config"
     ln -sf "$etc_dir/aria-ng.config.js" "$get_config"
     ln -sf "$etc_dir/aria-ng.config.js" "$www_dir/js/aria-ng-f1dd57abb9.min.js"
-    [ -n "$CONTAINER_IP_ADDRESS" ] && sed "s|127.0.0.1|0.0.0.0|g" "$etc_dir/aria-ng.config.js"
+    __replace "127.0.0.1" "0.0.0.0" "$etc_dir/aria-ng.config.js"
+    __replace "ARIA_RPC_PORT" "$port" "$etc_dir/aria-ng.config.js"
   fi
   if [ -n "$RPC_SECRET" ]; then
     echo "Changing rpc secret to $RPC_SECRET"
@@ -58,6 +68,7 @@ __update_conf_files() {
       echo "rpc-secret=$RPC_SECRET" >>"$etc_dir/aria2.conf"
     fi
   fi
+
   return 0
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -69,16 +80,21 @@ __update_ssl_conf() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # function to run before executing
 __pre_execute() {
-  [ -n "$PRE_EXEC_MESSAGE" ] && echo "$PRE_EXEC_MESSAGE"
 
   return 0
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # script to start server
 __run_start_script() {
+  local workdir="${WORKDIR:-$HOME}"
+  local cmd="$EXEC_CMD_BIN $EXEC_CMD_ARGS"
+  local user="${SERVICE_USER:-root}"
+  local lc_type="${LC_ALL:-${LC_CTYPE:-$LANG}}"
+  local home="${workdir//\/root/\/home\/docker}"
+  local path="/usr/local/bin:/usr/bin:/bin:/usr/sbin"
   case "$1" in
   check) shift 1 && __pgrep $EXEC_CMD_BIN || return 5 ;;
-  *) su_cmd $EXEC_CMD_BIN $EXEC_CMD_ARGS || return 10 ;;
+  *) su_cmd env -i PWD="$home" HOME="$home" LC_CTYPE="$lc_type" PATH="$path" USER="$user" sh -c "$cmd" || return 10 ;;
   esac
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -122,46 +138,48 @@ fi
 # Change to working directory
 [ -n "$WORKDIR" ] && mkdir -p "$WORKDIR" && __cd "$WORKDIR" && echo "Changed to $PWD"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Updating config files
-__update_conf_files
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Initialize ssl
 __update_ssl_conf
 __update_ssl_certs
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Updating config files
+__update_conf_files
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # run the pre execute commands
+[ -n "$PRE_EXEC_MESSAGE" ] && echo "$PRE_EXEC_MESSAGE"
 __pre_execute
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 WORKDIR="${WORKDIR:-}"
 if [ "$SERVICE_USER" = "root" ] || [ -z "$SERVICE_USER" ]; then
-  su_cmd_bin="eval"
-  su_cmd() { "$@" || return 1; }
+  su_cmd() { eval "$@" || return 1; }
 elif [ "$(builtin type -P gosu)" ]; then
-  su_cmd_bin="gosu $SERVICE_USER"
-  su_cmd() { eval $su_cmd_bin "$@" || return 1; }
+  su_cmd() { gosu $SERVICE_USER "$@" || return 1; }
 elif [ "$(builtin type -P runuser)" ]; then
-  su_cmd_bin="runuser -u $SERVICE_USER"
-  su_cmd() { eval $su_cmd_bin "$@" || return 1; }
+  su_cmd() { runuser -u $SERVICE_USER "$@" || return 1; }
 elif [ "$(builtin type -P sudo)" ]; then
-  su_cmd_bin="sudo -u $SERVICE_USER"
-  su_cmd() { eval $su_cmd_bin "$@" || return 1; }
+  su_cmd() { sudo -u $SERVICE_USER "$@" || return 1; }
 elif [ "$(builtin type -P su)" ]; then
-  su_cmd_bin="su -s /bin/sh - $SERVICE_USER"
-  su_cmd() { eval $su_cmd_bin -c "$@" || return 1; }
+  su_cmd() { su -s /bin/sh - $SERVICE_USER -c "$@" || return 1; }
 else
-  echo "Can not switch to $SERVICE_USER"
-  exit 10
+  echo "Can not switch to $SERVICE_USER: attempting to run as root"
+  su_cmd() { eval "$@" || return 1; }
 fi
-if [ -n "$WORKDIR" ] && [ -n "$SERVICE_USER" ]; then
+if [ -n "$WORKDIR" ] && [ "${SERVICE_USER:-$USER}" != "root" ]; then
   echo "Fixing file permissions"
-  su_cmd chown -Rf $SERVICE_USER $WORKDIR
+  su_cmd chown -Rf $SERVICE_USER $WORKDIR $etc_dir $var_dir $log_dir
 fi
-echo "Starting service: $EXEC_CMD_BIN $EXEC_CMD_ARGS"
-export -f __run_start_script
-export SERVICE_IS_RUNNING="true"
-su_cmd "touch /run/init.d/$EXEC_CMD_BIN.pid"
-su_cmd __run_start_script "$@" || echo "Failed to execute: $EXEC_CMD_BIN $EXEC_CMD_ARGS"
-[ "$?" -ne 0 ] && SERVICE_IS_RUNNING="false" && SERVICE_EXIT_CODE=10 && rm -Rf "/run/init.d/$EXEC_CMD_BIN.pid"
-#  su_cmd "$EXEC_CMD_BIN $EXEC_CMD_ARGS"
+if __pgrep $EXEC_CMD_BIN && [ -f "/run/init.d/$EXEC_CMD_BIN.pid" ]; then
+  SERVICE_EXIT_CODE=1
+  echo "$EXEC_CMD_BIN" is already running
+else
+  echo "Starting service: $EXEC_CMD_BIN $EXEC_CMD_ARGS"
+  su_cmd touch /run/init.d/$EXEC_CMD_BIN.pid
+  __run_start_script "$@" |& tee -a "/tmp/entrypoint.log"
+  if [ "$?" -ne 0 ]; then
+    echo "Failed to execute: $EXEC_CMD_BIN $EXEC_CMD_ARGS"
+    SERVICE_EXIT_CODE=10 SERVICE_IS_RUNNING="false"
+    su_cmd rm -Rf "/run/init.d/$EXEC_CMD_BIN.pid"
+  fi
+fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 exit $SERVICE_EXIT_CODE

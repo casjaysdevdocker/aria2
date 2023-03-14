@@ -2,7 +2,7 @@
 ARG LICENSE="MIT"
 ARG IMAGE_NAME="aria2"
 ARG PHP_SERVER="aria2"
-ARG BUILD_DATE="Thu Mar  9 07:49:33 PM EST 2023"
+ARG BUILD_DATE="Tue Mar 14 09:10:19 AM EDT 2023"
 ARG LANGUAGE="en_US.UTF-8"
 ARG TIMEZONE="America/New_York"
 ARG WWW_ROOT_DIR="/data/htdocs"
@@ -12,14 +12,12 @@ ARG DEFAULT_CONF_DIR="/usr/local/share/template-files/config"
 ARG DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
 
 ARG IMAGE_REPO="alpine"
-ARG IMAGE_VERSION="latest"
-ARG CONTAINER_VERSION="${IMAGE_VERSION}"
+ARG IMAGE_VERSION="edge"
+ARG CONTAINER_VERSION="latest"
 
-ARG SERVICE_PORT="6800"
-ARG EXPOSE_PORTS="6800"
-ARG PHP_VERSION="system"
-ARG NODE_VERSION="system"
-ARG NODE_MANAGER="system"
+ARG SERVICE_PORT="80"
+ARG EXPOSE_PORTS="80"
+ARG PHP_VERSION=""
 
 ARG USER="root"
 ARG DISTRO_VERSION="${IMAGE_VERSION}"
@@ -36,8 +34,6 @@ ARG PHP_SERVER
 ARG BUILD_DATE
 ARG SERVICE_PORT
 ARG EXPOSE_PORTS
-ARG NODE_VERSION
-ARG NODE_MANAGER
 ARG BUILD_VERSION
 ARG WWW_ROOT_DIR
 ARG DEFAULT_FILE_DIR
@@ -46,16 +42,16 @@ ARG DEFAULT_CONF_DIR
 ARG DEFAULT_TEMPLATE_DIR
 ARG DISTRO_VERSION
 ARG PHP_VERSION
+
 ARG ARIANG_VERSION="1.2.4"
 
-ARG PACK_LIST="bash bash-completion git curl wget sudo iproute2 ssmtp openssl jq ca-certificates tzdata mailcap ncurses util-linux pciutils usbutils coreutils binutils findutils grep rsync zip certbot tini  \
+ARG PACK_LIST="bash bash-completion git curl wget sudo iproute2 ssmtp openssl jq ca-certificates tzdata mailcap ncurses util-linux pciutils usbutils coreutils binutils findutils grep rsync zip certbot tini certbot py3-pip procps net-tools coreutils sed gawk grep attr findutils readline lsof less curl \
   aria2 unzip nginx"
 
 ENV ENV=~/.bashrc
 ENV SHELL="/bin/sh"
 ENV TZ="${TIMEZONE}"
 ENV TIMEZONE="${TZ}"
-ENV container="docker"
 ENV LANG="${LANGUAGE}"
 ENV TERM="xterm-256color"
 ENV HOSTNAME="casjaysdev-aria2"
@@ -74,7 +70,7 @@ RUN set -ex; \
   echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/main" >>"/etc/apk/repositories"; \
   echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/community" >>"/etc/apk/repositories"; \
   if [ "${DISTRO_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/testing" >>"/etc/apk/repositories" ; fi ; \
-  apk update --update-cache && apk add --no-cache ${PACK_LIST}
+  apk -U upgrade --no-cache && apk add --no-cache ${PACK_LIST}
 
 RUN echo "$TIMEZONE" >"/etc/timezone" ; \
   echo 'hosts: files dns' >"/etc/nsswitch.conf" ; \
@@ -84,19 +80,21 @@ RUN echo "$TIMEZONE" >"/etc/timezone" ; \
   if [ -f "/etc/profile.d/color_prompt.sh.disabled" ]; then mv -f "/etc/profile.d/color_prompt.sh.disabled" "/etc/profile.d/color_prompt.sh"; fi
 
 RUN touch "/etc/profile" "/root/.profile" ; \
-  [ -f "/etc/bash/bashrc" ] && cp -Rf "/etc/bash/bashrc" "/root/.bashrc" || [ -f "/etc/bashrc" ] && cp -Rf "/etc/bashrc" "/root/.bashrc" ; \
+  { [ -f "/etc/bash/bashrc" ] && cp -Rf "/etc/bash/bashrc" "/root/.bashrc" ; } || { [ -f "/etc/bashrc" ] && cp -Rf "/etc/bashrc" "/root/.bashrc" ; } || { [ -f "/etc/bash.bashrc" ] && cp -Rf "/etc/bash.bashrc" "/root/.bashrc" ; }; \
   sed -i 's|root:x:.*|root:x:0:0:root:/root:/bin/bash|g' "/etc/passwd" ; \
   grep -s -q 'alias quit' "/root/.bashrc" || printf '# Profile\n\n%s\n%s\n%s\n' '. /etc/profile' '. /root/.profile' "alias quit='exit 0 2>/dev/null'" >>"/root/.bashrc" ; \
   [ -f "/usr/local/etc/docker/env/default.sample" ] && [ -d "/etc/profile.d" ] && \
   cp -Rf "/usr/local/etc/docker/env/default.sample" "/etc/profile.d/container.env.sh" && chmod 755 "/etc/profile.d/container.env.sh" ; \
-  BASH_CMD="$(type -P bash)" ; [ -f "$BASH_CMD" ] && rm -rf "/bin/sh" && ln -sf "$BASH_CMD" "/bin/sh"
+  BASH_CMD="$(type -P bash)" ; [ -f "$BASH_CMD" ] && rm -rf "/bin/sh" && ln -sf "$BASH_CMD" "/bin/sh" ; \
+  pip install certbot-dns-rfc2136
 
 RUN set -ex ; \
-  curl -q -LSsf "https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip" -o "/tmp/AriaNg-$ARIANG_VERSION.zip" && \
-  mkdir -p "/usr/local/share/ariang" && unzip "/tmp/AriaNg-$ARIANG_VERSION.zip" -d "/usr/local/share/ariang"
+  mkdir -p "/usr/local/share/ariang" ; \
+  curl -q -LSsf "https://github.com/mayswind/AriaNg/releases/download/$ARIANG_VERSION/AriaNg-$ARIANG_VERSION.zip" -o "/tmp/AriaNg.zip" && \
+  unzip "/tmp/AriaNg.zip" -d "/usr/local/share/ariang"
 
 RUN echo 'Running cleanup' ; \
-  echo ""
+  rm -Rf /tmp/AriaNg.zip
 
 RUN rm -Rf "/config" "/data" ; \
   rm -rf /etc/systemd/system/*.wants/* ; \
@@ -121,8 +119,6 @@ ARG PHP_SERVER
 ARG BUILD_DATE
 ARG SERVICE_PORT
 ARG EXPOSE_PORTS
-ARG NODE_VERSION
-ARG NODE_MANAGER
 ARG BUILD_VERSION
 ARG DEFAULT_DATA_DIR
 ARG DEFAULT_CONF_DIR
@@ -155,7 +151,6 @@ ENV ENV=~/.bashrc
 ENV SHELL="/bin/bash"
 ENV TZ="${TIMEZONE}"
 ENV TIMEZONE="${TZ}"
-ENV container="docker"
 ENV LANG="${LANGUAGE}"
 ENV TERM="xterm-256color"
 ENV PORT="${SERVICE_PORT}"
@@ -170,8 +165,8 @@ COPY --from=build /. /
 
 VOLUME [ "/config","/data" ]
 
-EXPOSE ${EXPOSE_PORTS}
+EXPOSE ${ENV_PORTS}
 
-#CMD [ "" ]
-ENTRYPOINT [ "tini", "-p", "SIGTERM", "--", "/usr/local/bin/entrypoint.sh" ]
+CMD [ "" ]
+ENTRYPOINT [ "tini", "--", "/usr/local/bin/entrypoint.sh" ]
 HEALTHCHECK --start-period=1m --interval=2m --timeout=3s CMD [ "/usr/local/bin/entrypoint.sh", "healthcheck" ]

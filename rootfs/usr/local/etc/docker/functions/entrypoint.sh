@@ -4,12 +4,13 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __rm() { [ -f "$1" ] && rm -Rf "${1:?}"; }
 __cd() { [ -d "$1" ] && builtin cd "$1" || return 1; }
-__ps() { [ -f "$(type -P ps)" ] && ps "$@" || return 10; }
 __netstat() { [ -f "$(type -P netstat)" ] && netstat "$@" || return 10; }
 __curl() { curl -q -sfI --max-time 3 -k -o /dev/null "$@" &>/dev/null || return 10; }
 __find() { find "$1" -mindepth 1 -type ${2:-f,d} 2>/dev/null | grep '^' || return 10; }
-__pcheck() { [ -n "$(which pgrep 2>/dev/null)" ] && pgrep -x "$1" &>/dev/null || return 10; }
-__pgrep() { __pcheck "${1:-GEN_SCRIPT_REPLACE_APPNAME}" || __ps aux 2>/dev/null | grep -Fw " ${1:-$GEN_SCRIPT_REPLACE_APPNAME}" | grep -qv ' grep' || return 10; }
+__no_exit() { exec /bin/sh -c "trap : TERM INT; (while true; do sleep 1000; done) & wait"; }
+__pcheck() { [ -n "$(which pgrep 2>/dev/null)" ] && pgrep -o "$1" &>/dev/null || return 10; }
+__ps() { [ -f "$(type -P ps)" ] && ps "$@" 2>/dev/null | grep -Fw " ${1:-$GEN_SCRIPT_REPLACE_APPNAME}" || return 10; }
+__pgrep() { __pcheck "${1:-GEN_SCRIPT_REPLACE_APPNAME}" || __ps "${1:-$GEN_SCRIPT_REPLACE_APPNAME}" | grep -qv ' grep' || return 10; }
 __get_ip6() { ip a 2>/dev/null | grep -w 'inet6' | awk '{print $2}' | grep -vE '^::1|^fe' | sed 's|/.*||g' | head -n1 | grep '^' || echo ''; }
 __get_ip4() { ip a 2>/dev/null | grep -w 'inet' | awk '{print $2}' | grep -vE '^127.0.0' | sed 's|/.*||g' | head -n1 | grep '^' || echo '127.0.0.1'; }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,26 +40,39 @@ __update_ssl_certs() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __certbot() {
-  if [ -f "/config/bin/certbot.sh" ]; then
-    "/config/bin/certbot.sh"
+  local statusCode=0
+  [ -n "$(type -P 'certbot')" ] || return 1
+  if [ -f "/config/certbot/env.sh" ]; then
+    . "/config/certbot/env.sh"
+  fi
+  if [ -f "/config/certbot/setup.sh" ]; then
+    eval "/config/certbot/setup.sh"
+    statusCode=$?
   elif [ -f "/etc/named/certbot.sh" ]; then
-    "/etc/named/certbot.sh"
+    eval "/etc/named/certbot.sh"
+    statusCode=$?
+  elif [ -f "/config/named/certbot-update.conf" ]; then
+    if certbot renew -n --dry-run --agree-tos --expand --dns-rfc2136 --dns-rfc2136-credentials /config/named/certbot-update.conf; then
+      certbot renew -n --agree-tos --expand --dns-rfc2136 --dns-rfc2136-credentials /config/named/certbot-update.conf
+    fi
+    statusCode=$?
   else
     local options="${1:-create}" && shift 1
     domain_list="$DOMAINNAME www.$DOMAINNAME mail.$DOMAINNAME $CERTBOT_DOMAINS"
     [ -f "/config/env/ssl.sh" ] && . "/config/env/ssl.sh"
-    [ "$SSL_CERT_BOT" = "true" ] && [ -f "$(type -P certbot)" ] || { export SSL_CERT_BOT="" && return 10; }
+    [ "$SSL_CERT_BOT" = "true" ] || { export SSL_CERT_BOT="" && return 10; }
     [ -n "$CERT_BOT_MAIL" ] || echo "The variable CERT_BOT_MAIL is not set" && return 1
     [ -n "$DOMAINNAME" ] || echo "The variable DOMAINNAME is not set" && return 1
     for domain in $$CERTBOT_DOMAINS; do
       [ -n "$domain" ] && ADD_CERTBOT_DOMAINS="-d $domain "
     done
     certbot $options --agree-tos -m $CERT_BOT_MAIL certonly --webroot \
-      -w "${WWW_ROOT_DIR:-/data/htdocs/www}" \
-      $ADD_CERTBOT_DOMAINS --put-all-related-files-into "$SSL_DIR" \
-      -key-path "$SSL_KEY" -fullchain-path "$SSL_CERT" && __update_ssl_certs
+      -w "${WWW_ROOT_DIR:-/data/htdocs/www}" $ADD_CERTBOT_DOMAINS \
+      --put-all-related-files-into "$SSL_DIR" -key-path "$SSL_KEY" -fullchain-path "$SSL_CERT"
+    statusCode=$?
   fi
-  return $?
+  [ $statusCode -eq 0 ] && __update_ssl_certs
+  return $statusCode
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __create_ssl_cert() {
@@ -92,19 +106,21 @@ __create_ssl_cert() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __init_apache() {
-  local etc_dir="/etc/${1:-apache2}"
-  local conf_dir="/config/${1:-apache2}"
-  local www_dir="${WWW_ROOT_DIR:-/data/htdocs/www}"
-  local apache_bin="$(type -P 'httpd' || type -P 'apache2')"
+  local etc_dir="" conf_dir="" conf_dir="" www_dir="" apache_bin=""
+  etc_dir="/etc/${1:-apache2}"
+  conf_dir="/config/${1:-apache2}"
+  www_dir="${WWW_ROOT_DIR:-/data/htdocs/www}"
+  apache_bin="$(type -P 'httpd' || type -P 'apache2')"
   #
   return 0
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __init_nginx() {
-  local etc_dir="/etc/${1:-nginx}"
-  local conf_dir="/config/${1:-nginx}"
-  local www_dir="${WWW_ROOT_DIR:-/data/htdocs}"
-  local nginx_bin="$(type -P 'nginx')"
+  local etc_dir="" conf_dir="" www_dir="" nginx_bin=""
+  etc_dir="/etc/${1:-nginx}"
+  conf_dir="/config/${1:-nginx}"
+  www_dir="${WWW_ROOT_DIR:-/data/htdocs}"
+  nginx_bin="$(type -P 'nginx')"
   #
   return 0
 }
@@ -118,14 +134,15 @@ __init_php() {
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __init_mysql() {
-  local db_dir="/data/db/mysql"
-  local etc_dir="${home:-/etc/${1:-mysql}}"
-  local db_user="${SERVICE_USER:-mysql}"
-  local conf_dir="/config/${1:-mysql}"
-  local user_pass="${MARIADB_PASSWORD:-$MARIADB_ROOT_PASSWORD}"
-  local user_db="${MARIADB_DATABASE}" user_name="${MARIADB_USER:-root}"
-  local root_pass="$MARIADB_ROOT_PASSWORD"
-  local mysqld_bin="$(type -P 'mysqld')"
+  local db_dir="" etc_dir="" db_user="" conf_dir="" user_pass="" user_db="" root_pass="" mysqld_bin=""
+  db_dir="/data/db/mysql"
+  etc_dir="${home:-/etc/${1:-mysql}}"
+  db_user="${SERVICE_USER:-mysql}"
+  conf_dir="/config/${1:-mysql}"
+  user_pass="${MARIADB_PASSWORD:-$MARIADB_ROOT_PASSWORD}"
+  user_db="${MARIADB_DATABASE}" user_name="${MARIADB_USER:-root}"
+  root_pass="$MARIADB_ROOT_PASSWORD"
+  mysqld_bin="$(type -P 'mysqld')"
   #
   return 0
 }
@@ -172,13 +189,20 @@ __run_once() {
   fi
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# run program ever n minutes
 __cron() {
-  local interval="$1" && shift 1
-  local command="$*"
+  trap '[ -f "/run/cron/$cmd" ] && rm -Rf "/run/cron/$cmd";exit 0' SIGINT ERR EXIT
+  test -n "$1" && test -z "${1//[0-9]/}" && interval=$(($1 * 60)) && shift 1 || interval="5"
+  [ $# -eq 0 ] && echo "Usage: cron [interval] [command]" && exit 1
+  command="$*"
+  cmd="$(echo "$command" | awk -F' ' '{print $1}')"
+  [ -d "/run/cron" ] || mkdir -p "/run/cron"
+  echo "$command" >"/run/cron/$cmd"
   while :; do
     eval "$command"
     sleep $interval
-  done
+    [ -f "/run/cron/$cmd" ] || break
+  done |& tee /var/log/entrypoint.log
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __replace() {
@@ -253,6 +277,7 @@ __exec_command() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Setup the server init scripts
 __start_init_scripts() {
+  { [ "$1" = "" ] && shift 1; } || { [ "$1" = " " ] && shift 1; }
   [ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -o pipefail -x$DEBUGGER_OPTIONS || set -o pipefail
   local basename=""
   local init_pids=""
@@ -265,13 +290,13 @@ __start_init_scripts() {
     for init in "$init_dir"/*.sh; do
       if [ -f "$init" ]; then
         name="$(basename "$init")"
-        (eval "$init" 2>/dev/stderr >/dev/stdout &)
+        (eval "$init" &)
         initStatus=$(($? + initStatus))
-        sleep 30
+        sleep 10
+        echo ""
       fi
     done
   fi
-  return $initStatus
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __setup_mta() {
@@ -283,11 +308,12 @@ __setup_mta() {
   local account_domain="${EMAIL_DOMAIN//*@/}"
   echo "$EMAIL_RELAY" | grep '[0-9][0-9]' || relay_port="465"
 
-  if [ -d "/etc/ssmtp" ] || [ -d "/config/ssmtp" ]; then
-    # sSMTP relay setup
-    [ -d "/etc/ssmtp" ] && rm -Rf "/etc/ssmtp" || return 0
+  ################# sSMTP relay setup
+  if [ -n "$(type -P 'ssmtp')" ] || [ -d "/etc/ssmtp" ] || [ -d "/config/ssmtp" ]; then
     [ -d "/config/ssmtp" ] || mkdir -p "/config/ssmtp"
-    cat <<EOF | tee "/config/ssmtp/ssmtp.conf" &>/dev/null
+    [ -f "/etc/ssmtp/ssmtp.conf" ] && rm -Rf "/etc/ssmtp/ssmtp.conf"
+    if [ ! -f "/config/ssmtp/ssmtp.conf" ]; then
+      cat <<EOF | tee "/config/ssmtp/ssmtp.conf" &>/dev/null
 # ssmtp configuration.
 root=${account_user:-root}@${account_domain:-$HOSTNAME}
 mailhub=${relay_server:-172.17.0.1}:$relay_port
@@ -302,20 +328,22 @@ FromLineOverride=yes
 #AuthPass=password
 
 EOF
-    # if [ -f "/config/ssmtp/ssmtp.conf" ] && [ ! -f "/run/init.d/ssmtp.pid" ]; then
-    # SERVICES_LIST+="ssmtp "
-    # cp -Rf "/config/ssmtp/." "/etc/ssmtp/"
-    # __exec_command ssmtp "/etc/ssmtp/ssmtp.conf" &
-    # [ $? -eq 0 ] && touch "/run/init.d/ssmtp.pid" || exitCode=1
-    # fi
-    # postfix relay setup
-  elif [ -d "/config/postfix" ] || [ -d "/etc/postfix" ]; then
-    cat <<EOF | tee "/config/postfix/main.cf" &>/dev/null
+    fi
+    if [ -f "/config/ssmtp/ssmtp.conf" ]; then
+      cp -Rf "/config/ssmtp/." "/etc/ssmtp/"
+    fi
+
+    ################# postfix relay setup
+  elif [ -n "$(type -P 'postfix')" ] || [ -d "/config/postfix" ] || [ -d "/etc/postfix" ]; then
+    [ -d "/etc/postfix" ] || mkdir -p "/etc/postfix"
+    [ -f "/etc/postfix/main.cf" ] && rm -Rf "/etc/postfix/main.cf"
+    if [ ! -f "/config/postfix/main.cf" ]; then
+      cat <<EOF | tee "/config/postfix/main.cf" &>/dev/null
 # postfix configuration.
-smtpd_banner = \$myhostname ESMTP CasjaysDev mail
+smtpd_banner = \$myhostname ESMTP email server
 compatibility_level = 2
-alias_maps = hash:/etc/aliases
-alias_database = hash:/etc/aliases
+alias_maps = hash:/etc/postfix/aliases
+alias_database = hash:/etc/postfix/aliases
 mynetworks = /etc/postfix/mynetworks
 transport_maps = hash:/etc/postfix/transport
 virtual_alias_maps = hash:/etc/postfix/virtual
@@ -324,7 +352,6 @@ tls_random_source = dev:/dev/urandom
 smtp_use_tls = yes
 smtpd_use_tls = yes
 smtpd_tls_session_cache_database = btree:/etc/postfix/smtpd_scache
-smtpd_tls_dh1024_param_file = /etc/ssl/dhparam/1024.pem
 smtpd_tls_exclude_ciphers = aNULL, eNULL, EXPORT, DES, RC4, MD5, PSK, aECDH, EDH-DSS-DES-CBC3-SHA, EDH-RSA-DES-CBC3-SHA, KRB5-DES, CBC3-SHA
 smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, defer_unauth_destination
 mydestination =
@@ -337,13 +364,14 @@ relayhost = [$relay_server]:$relay_port
 inet_protocols = ipv4
 
 EOF
-    touch "/etc/aliases" "/etc/postfix/mynetworks" "/etc/postfix/transport"
-    touch "/etc/postfix/mydomains.pcre" "/etc/postfix/mydomains" "/etc/postfix/virtual"
-    postmap "/etc/aliases" "/etc/postfix/mynetworks" "/etc/postfix/transport" &>/dev/null
-    postmap "/etc/postfix/mydomains.pcre" "/etc/postfix/mydomains" "/etc/postfix/virtual" &>/dev/null
+    fi
+    touch "/config/postfix/aliases" "/config/postfix/mynetworks" "/config/postfix/transport"
+    touch "/config/postfix/mydomains.pcre" "/config/postfix/mydomains" "/config/postfix/virtual"
     if [ -f "/config/postfix/main.cf" ] && [ ! -f "/run/init.d/postfix.pid" ]; then
       SERVICES_LIST+="postfix "
       cp -Rf "/config/postfix/." "/etc/postfix/"
+      postmap "/etc/postfix/aliases" "/etc/postfix/mynetworks" "/etc/postfix/transport" &>/dev/null
+      postmap "/etc/postfix/mydomains.pcre" "/etc/postfix/mydomains" "/etc/postfix/virtual" &>/dev/null
       __exec_command postfix "/etc/postfix/main.cf" &
       [ $? -eq 0 ] && touch "/run/init.d/postfix.pid" || exitCode=1
     fi
@@ -365,13 +393,9 @@ MARIADB_CONFIG_FILE="${MARIADB_CONFIG_FILE:-$(__find_mysql_conf)}"
 POSTGRES_CONFIG_FILE="${POSTGRES_CONFIG_FILE:-$(__find_pgsql_conf)}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # export variables
-export CONTAINER_IP4_ADDRESS CONTAINER_IP6_ADDRESS
-export PHP_INI_DIR PHP_BIN_DIR HTTPD_CONFIG_FILE
-export NGINX_CONFIG_FILE MYSQL_CONFIG_FILE PGSQL_CONFIG_FILE
-export ENTRYPOINT_FIRST_RUN SET_RANDOM_PASS
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # export the functions
-export -f __update_ssl_certs __certbot __create_ssl_cert __init_apache __init_nginx
-export -f __init_php __init_mysql __init_mongodb __init_postgres __init_couchdb
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # end of functions
