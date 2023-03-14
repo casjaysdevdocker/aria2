@@ -85,13 +85,14 @@ __run_message() {
 # rewrite variables
 ENV_PORTS="${ENV_PORTS//,/ }"
 ENV_PORTS="${ENV_PORTS//\/*/}"
+SERVER_PORTS="${SERVER_PORTS//,/ }"
 WEB_SERVER_PORTS="${SERVICE_PORT//\/*/}"
 HEALTH_ENDPOINTS="${HEALTH_ENDPOINTS//,/ }"
 WEB_SERVER_PORTS="${WEB_SERVER_PORTS//\/*/}"
 WEB_SERVER_PORTS="${SERVICE_PORT//,/ } ${WEB_SERVER_PORTS//,/ }"
 ENV_PORTS="$(echo "$ENV_PORTS" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ' | grep '^' || false)"
 WEB_SERVER_PORTS="$(echo "$WEB_SERVER_PORTS" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ' | grep '^' || false)"
-ENV_PORTS="$(echo "$WEB_SERVER_PORTS $ENV_PORTS $SERVER_PORTS" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ' | grep '^' || false)"
+ENV_PORTS="$(echo "$SERVER_PORTS" "$WEB_SERVER_PORTS" "$ENV_PORTS" "$SERVER_PORTS" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ' | grep '^' || false)"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # variables based on env/files
 [ "$SERVICE_PORT" = "443" ] && SSL_ENABLED="true"
@@ -112,21 +113,21 @@ DEFAULT_TEMPLATE_DIR="${DEFAULT_TEMPLATE_DIR:-/usr/local/share/template-files/de
 mkdir -p "/run"
 mkdir -p "/tmp"
 mkdir -p "/root"
-mkdir -p "/var/log"
+mkdir -p "/data/logs"
 mkdir -p "/run/init.d"
 mkdir -p "/config/secure"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # create required files
-touch "/var/log/entrypoint.log"
+touch "/data/logs/entrypoint.log"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # fix permissions
 chmod -f 777 "/run"
 chmod -f 777 "/tmp"
 chmod -f 700 "/root"
-chmod -f 777 "/var/log"
+chmod -f 777 "/data/logs"
 chmod -f 777 "/run/init.d"
 chmod -f 777 "/config/secure"
-chmod -f 777 "/var/log/entrypoint.log"
+chmod -f 777 "/data/logs/entrypoint.log"
 ################## END OF CONFIGURATION #####################
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Create the backup dir

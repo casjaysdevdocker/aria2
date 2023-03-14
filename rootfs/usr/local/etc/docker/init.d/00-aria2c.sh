@@ -43,9 +43,9 @@ __update_conf_files() {
   local port="${SERVICE_PORT:-${ARIA2RPCPORT:-8000}}"
   [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   [ -d "$data_dir" ] || mkdir -p "$data_dir"
-  [ -d "/var/log/aria2" ] || mkdir -p "/var/log/aria2"
+  [ -d "/data/logs/aria2" ] || mkdir -p "/data/logs/aria2"
   cp -Rf "$conf_dir/." "$etc_dir/"
-  ln -sf "/dev/stdout" "/var/log/aria2/aria2.log"
+  ln -sf "/dev/stdout" "/data/logs/aria2/aria2.log"
   ln -sf "$conf_dir/aria2.session" "$etc_dir/aria2.session"
   if [ -f "$etc_dir/aria-ng.config.js" ]; then
     rm -Rf "$get_config"
