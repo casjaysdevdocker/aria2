@@ -40,8 +40,8 @@ nginx_bin="$(type -P 'nginx')"
 # use this function to update config files - IE: change port
 __update_conf_files() {
   echo "Initializing nginx web server in $conf_dir"
-  mkdir -p "$data_dir/log/nginx"
-  chmod -Rf 777 "$data_dir/log/nginx"
+  mkdir -p "$data_dir/logs/nginx"
+  chmod -Rf 777 "$data_dir/logs/nginx"
   [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   [ -d "$conf_dir" ] && cp -Rf "$conf_dir/." "$etc_dir/"
   if [ "$SSL_ENABLED" = "true" ]; then
@@ -76,7 +76,7 @@ __update_ssl_conf() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # function to run before executing
 __pre_execute() {
-  grep -s -q "nginx:" "/etc/passwd" && chown -Rf nginx:nginx "$etc_dir" "$www_dir" "$data_dir/log/nginx"
+  grep -s -q "nginx:" "/etc/passwd" && chown -Rf nginx:nginx "$etc_dir" "$www_dir" "$data_dir/logs/nginx"
 
   return 0
 }
