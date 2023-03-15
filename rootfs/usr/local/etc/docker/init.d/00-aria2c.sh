@@ -45,7 +45,6 @@ __update_conf_files() {
   [ -d "$data_dir" ] || mkdir -p "$data_dir"
   [ -d "/data/logs/aria2" ] || mkdir -p "/data/logs/aria2"
   cp -Rf "$conf_dir/." "$etc_dir/"
-  ln -sf "/dev/stdout" "/data/logs/aria2/aria2.log"
   ln -sf "$conf_dir/aria2.session" "$etc_dir/aria2.session"
   if [ -f "$etc_dir/aria-ng.config.js" ]; then
     rm -Rf "$get_config"

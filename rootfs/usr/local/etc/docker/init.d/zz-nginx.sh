@@ -44,8 +44,6 @@ __update_conf_files() {
   chmod -Rf 777 "$data_dir/log/nginx"
   [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   [ -d "$conf_dir" ] && cp -Rf "$conf_dir/." "$etc_dir/"
-  ln -sf "/dev/stderr" "var/log/nginx/nginx.log"
-  ln -sf "/dev/stdout" "/data/logs/nginx/access.log"
   if [ "$SSL_ENABLED" = "true" ]; then
     __file_copy "$conf_dir/nginx.ssl.conf" "$etc_dir/nginx.conf"
     __file_copy "$conf_dir/vhosts.d/default.ssl.conf" "$etc_dir/vhosts.d/default.conf"
