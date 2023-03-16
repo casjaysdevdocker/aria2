@@ -40,7 +40,7 @@ get_config="$(find "$www_dir/js" -name 'aria-ng-*.min.js' | grep -v 'f1dd57abb9.
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # use this function to update config files - IE: change port
 __update_conf_files() {
-  local port="${SERVICE_PORT:-${ARIA2RPCPORT:-8000}}"
+  local port="${SERVICE_PORT:-8000}"
   [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   [ -d "$data_dir" ] || mkdir -p "$data_dir"
   [ -d "/data/logs/aria2" ] || mkdir -p "/data/logs/aria2"
@@ -50,16 +50,17 @@ __update_conf_files() {
     rm -Rf "$get_config"
     ln -sf "$etc_dir/aria-ng.config.js" "$get_config"
     ln -sf "$etc_dir/aria-ng.config.js" "$www_dir/js/aria-ng-f1dd57abb9.min.js"
-    __replace "127.0.0.1" "0.0.0.0" "$etc_dir/aria-ng.config.js"
   fi
   if [ -n "$RPC_SECRET" ]; then
     echo "Changing rpc secret to $RPC_SECRET"
-    if grep -sq "rpc-secret=*" "$etc_dir/aria2.conf"; then
-      sed -i "s|secret: '',|secret: ''$RPC_SECRET'',|g" "$www_dir/js/aria-ng.config.js"
-      sed -i "s|rpc-secret=.*|rpc-secret=$RPC_SECRET|g" "$etc_dir/aria2.conf"
+    if grep -sq "rpc-secret=" "$etc_dir/aria2.conf"; then
+      __replace "REPLACE_RPC_SECRET" "$RPC_SECRET" "$www_dir/js/aria-ng.config.js"
+      __replace "REPLACE_RPC_SECRET" "$RPC_SECRET" "$etc_dir/aria2.conf"
     else
       echo "rpc-secret=$RPC_SECRET" >>"$etc_dir/aria2.conf"
     fi
+  else
+    __replace "rpc-secret=" "#rpc-secret=" "$etc_dir/aria2.conf"
   fi
 
   return 0

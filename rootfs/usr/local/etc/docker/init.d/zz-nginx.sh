@@ -25,7 +25,7 @@ done
 WORKDIR=""                               # set working directory
 SERVICE_UID="0"                          # set the user id
 SERVICE_USER="root"                      # execute command as another user
-SERVICE_PORT="${PORT:-80}"               # port which service is listening on
+SERVICE_PORT="80"                        # port which service is listening on
 EXEC_CMD_BIN="nginx"                     # command to execute
 EXEC_CMD_ARGS="-c /etc/nginx/nginx.conf" # command arguments
 PRE_EXEC_MESSAGE=""                      # Show message before execute
@@ -34,8 +34,9 @@ PRE_EXEC_MESSAGE=""                      # Show message before execute
 data_dir="/data"
 etc_dir="/etc/nginx"
 conf_dir="/config/nginx"
-www_dir="${WWW_ROOT_DIR:-/data/htdocs}"
+www_dir="${WWW_ROOT_DIR:-/usr/local/share/ariang}"
 nginx_bin="$(type -P 'nginx')"
+SERVICE_PORT="${ARIA2RPCPORT:-${PORT:-$SERVICE_PORT}}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # use this function to update config files - IE: change port
 __update_conf_files() {
@@ -44,12 +45,6 @@ __update_conf_files() {
   chmod -Rf 777 "$data_dir/logs/nginx"
   [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   [ -d "$conf_dir" ] && cp -Rf "$conf_dir/." "$etc_dir/"
-  if [ "$SSL_ENABLED" = "true" ]; then
-    __file_copy "$conf_dir/nginx.ssl.conf" "$etc_dir/nginx.conf"
-    __file_copy "$conf_dir/vhosts.d/default.ssl.conf" "$etc_dir/vhosts.d/default.conf"
-  fi
-  [ -f "$etc_dir/nginx.ssl.conf" ] && rm -Rf "$etc_dir/nginx.ssl.conf"
-  [ -f "$etc_dir/vhosts.d/default.ssl.conf" ] && rm -Rf "$etc_dir/vhosts.d/default.ssl.conf"
   #
   [ -d "$www_dir" ] || mkdir -p "$www_dir"
   [ -d "$www_dir/www/health" ] || mkdir -p "$www_dir/www/health"
@@ -58,12 +53,8 @@ __update_conf_files() {
   #
   __replace "REPLACE_SERVER_PORT" "${SERVICE_PORT:-80}" "$etc_dir/nginx.conf"
   __replace "REPLACE_SERVER_PORT" "${SERVICE_PORT:-80}" "$etc_dir/vhosts.d/default.conf"
-  [ -f "$www_dir/www/index.php" ] && __replace "SERVER_SOFTWARE" "dns" "$www_dir/www/index.php"
-  [ -f "$www_dir/www/index.html" ] && __replace "SERVER_SOFTWARE" "dns" "$www_dir/www/index.html"
-  if [ -z "$PHP_BIN_DIR" ]; then
-    [ -f "$www_dir/www/info.php" ] && echo "PHP support is not enabled" >"$www_dir/www/info.php"
-    [ -f "$etc_dir/conf.d/php-fpm.conf" ] && echo "# PHP support is not enabled" >"$etc_dir/conf.d/php-fpm.conf"
-  fi
+  #
+  __replace "REPLACE_SERVER_PORT" "${SERVICE_PORT:-80}" "/etc/aria2/aria-ng.config.js"
 
   return 0
 }
