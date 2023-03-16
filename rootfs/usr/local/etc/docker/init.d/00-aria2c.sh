@@ -44,13 +44,14 @@ __update_conf_files() {
   [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   [ -d "$data_dir" ] || mkdir -p "$data_dir"
   [ -d "/data/logs/aria2" ] || mkdir -p "/data/logs/aria2"
-  cp -Rf "$conf_dir/." "$etc_dir/"
+  cp -Rf "$conf_dir/aria2.conf" "$etc_dir/aria2.conf"
   ln -sf "$conf_dir/aria2.session" "$etc_dir/aria2.session"
   if [ -f "$etc_dir/aria-ng.config.js" ]; then
     rm -Rf "$get_config"
-    ln -sf "$etc_dir/aria-ng.config.js" "$get_config"
-    ln -sf "$etc_dir/aria-ng.config.js" "$www_dir/js/aria-ng-f1dd57abb9.min.js"
+    ln -sf "$conf_dir/aria-ng.config.js" "$get_config"
+    ln -sf "$conf_dir/aria-ng.config.js" "$www_dir/js/aria-ng-f1dd57abb9.min.js"
   fi
+  __replace "REPLACE_RPC_PORT" "$SERVICE_PORT" "$etc_dir/aria2.conf"
   if [ -n "$RPC_SECRET" ]; then
     echo "Changing rpc secret to $RPC_SECRET"
     if grep -sq "rpc-secret=" "$etc_dir/aria2.conf"; then
@@ -88,7 +89,7 @@ __run_start_script() {
   local path="/usr/local/bin:/usr/bin:/bin:/usr/sbin"
   case "$1" in
   check) shift 1 && __pgrep $EXEC_CMD_BIN || return 5 ;;
-  *) su_cmd env -i PWD="$home" HOME="$home" LC_CTYPE="$lc_type" PATH="$path" USER="$user" sh -c "$cmd" || return 10 ;;
+  *) su_cmd "$cmd" || return 10 ;;
   esac
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -51,10 +51,10 @@ __update_conf_files() {
   [ -f "$www_dir/www/health/index.txt" ] || echo 'ok' >"$www_dir/www/health/index.txt"
   [ -f "$www_dir/www/health/index.json" ] || echo '{ "status": "ok" }' >"$www_dir/www/health/index.json"
   #
-  __replace "REPLACE_SERVER_PORT" "${SERVICE_PORT:-80}" "$etc_dir/nginx.conf"
-  __replace "REPLACE_SERVER_PORT" "${SERVICE_PORT:-80}" "$etc_dir/vhosts.d/default.conf"
-  #
-  __replace "REPLACE_SERVER_PORT" "${SERVICE_PORT:-80}" "/etc/aria2/aria-ng.config.js"
+  __replace "REPLACE_SERVER_PORT" "$SERVICE_PORT" "$etc_dir/nginx.conf"
+  __replace "REPLACE_SERVER_PORT" "$SERVICE_PORT" "$etc_dir/vhosts.d/default.conf"
+  __replace "REPLACE_SERVER_PORT" "$SERVICE_PORT" "/etc/aria2/aria-ng.config.js"
+  __replace "REPLACE_SERVER_ADDR" "$CONTAINER_IP4_ADDRESS" "/etc/aria2/aria-ng.config.js"
 
   return 0
 }

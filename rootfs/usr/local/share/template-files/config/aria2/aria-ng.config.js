@@ -524,7 +524,7 @@
         titleRefreshInterval: 5e3,
         browserNotification: !1,
         rpcAlias: 'aria2',
-        rpcHost: '127.0.0.1',
+        rpcHost: 'REPLACE_SERVER_ADDR',
         rpcPort: 'REPLACE_SERVER_PORT',
         rpcInterface: 'jsonrpc',
         protocol: 'http',
