@@ -46,10 +46,10 @@ __update_conf_files() {
   [ -d "/data/logs/aria2" ] || mkdir -p "/data/logs/aria2"
   cp -Rf "$conf_dir/aria2.conf" "$etc_dir/aria2.conf"
   ln -sf "$conf_dir/aria2.session" "$etc_dir/aria2.session"
-  if [ -f "$etc_dir/aria-ng.config.js" ]; then
+  if [ -f "$conf_dir/aria-ng.config.js" ]; then
     rm -Rf "$get_config"
-    ln -sf "$conf_dir/aria-ng.config.js" "$get_config"
-    ln -sf "$conf_dir/aria-ng.config.js" "$www_dir/js/aria-ng-f1dd57abb9.min.js"
+    cp -Rf "$conf_dir/aria-ng.config.js" "$get_config"
+    cp -Rf "$conf_dir/aria-ng.config.js" "$www_dir/js/aria-ng-f1dd57abb9.min.js"
   fi
   __replace "REPLACE_RPC_PORT" "$SERVICE_PORT" "$etc_dir/aria2.conf"
   if [ -n "$RPC_SECRET" ]; then
