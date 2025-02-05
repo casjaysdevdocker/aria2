@@ -24,14 +24,15 @@ set -o pipefail -x
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set env variables
 exitCode=0
-ARIANG_VERSION="${ARIANG_VERSION:-$(curl -q -LSsf "https://api.github.com/repos/mayswind/AriaNg/releases" | jq -rc '.[].tag_name' | sort -rV | head -n1 | grep '^' || printf "1.3.8")}"
-ARIANG_ARCHIVE_FILE="https://github.com/mayswind/AriaNg/releases/download/${ARIANG_VERSION}/AriaNg-${ARIANG_VERSION}.zip"
 ARIANG_TEMP_FILE="/tmp/AriaNg.zip"
+ARIANG_VERSION="${ARIANG_VERSION:-1.3.9}"
+ARIANG_LASTEST="$(curl -q -LSsf "https://api.github.com/repos/mayswind/AriaNg/releases" | jq -rc '.[].tag_name' | sort -rV | head -n1 | grep '^')"
+ARIANG_ARCHIVE_FILE="https://github.com/mayswind/AriaNg/releases/download/${ARIANG_LASTEST:-$ARIANG_VERSION}/AriaNg-${ARIANG_LASTEST:-$ARIANG_VERSION}.zip"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Predefined actions
 [ -d "/usr/local/share/ariang" ] || mkdir -p "/usr/local/share/ariang"
 if curl -q -LSsf "$ARIANG_ARCHIVE_FILE" -o "$ARIANG_TEMP_FILE"; then
-  unzip "$ARIANG_TEMP_FILE" -d "/usr/local/share/ariang" -q
+  unzip -qq "$ARIANG_TEMP_FILE" -d "/usr/local/share/ariang"
   exitCode=$?
 else
   exitCode=9
