@@ -31,7 +31,7 @@ ARIANG_TEMP_FILE="/tmp/AriaNg.zip"
 # Predefined actions
 [ -d "/usr/local/share/ariang" ] || mkdir -p "/usr/local/share/ariang"
 if curl -q -LSsf "$ARIANG_ARCHIVE_FILE" -o "$ARIANG_TEMP_FILE"; then
-  unzip "$ARIANG_TEMP_FILE" -d "/usr/local/share/ariang"
+  unzip "$ARIANG_TEMP_FILE" -d "/usr/local/share/ariang" -q
   exitCode=$?
 else
   exitCode=9
