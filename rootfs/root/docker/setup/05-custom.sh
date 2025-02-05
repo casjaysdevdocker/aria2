@@ -19,7 +19,7 @@
 # shellcheck disable=SC2317
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set bash options
-set -o pipefail
+set -o pipefail -x
 [ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -x$DEBUGGER_OPTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set env variables
