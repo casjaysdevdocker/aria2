@@ -24,7 +24,7 @@ set -o pipefail -x
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set env variables
 exitCode=0
-ARIANG_VERSION="${ARIANG_VERSION:-$(curl -q -LSsf "https://api.github.com/repos/mayswind/AriaNg/releases" | jq -r '.[].tag_name' | sort -rV | head -n1 | grep '^' || echo '1.3.8')}"
+ARIANG_VERSION="${ARIANG_VERSION:-$(curl -q -LSsf "https://api.github.com/repos/mayswind/AriaNg/releases" | jq -rc '.[].tag_name' | sort -rV | head -n1 | grep '^' || printf "1.3.8")}"
 ARIANG_ARCHIVE_FILE="https://github.com/mayswind/AriaNg/releases/download/${ARIANG_VERSION}/AriaNg-${ARIANG_VERSION}.zip"
 ARIANG_TEMP_FILE="/tmp/AriaNg.zip"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
