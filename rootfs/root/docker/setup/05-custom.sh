@@ -19,20 +19,21 @@
 # shellcheck disable=SC2317
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set bash options
-set -o pipefail -x
+set -o pipefail
 [ "$DEBUGGER" = "on" ] && echo "Enabling debugging" && set -x$DEBUGGER_OPTIONS
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set env variables
 exitCode=0
 ARIANG_TEMP_FILE="/tmp/AriaNg.zip"
+ARIANG_HOME="/usr/local/share/ariang"
 ARIANG_VERSION="${ARIANG_VERSION:-1.3.9}"
-ARIANG_LASTEST="$(curl -q -LSsf "https://api.github.com/repos/mayswind/AriaNg/releases" | jq -rc '.[].tag_name' | sort -rV | head -n1 | grep '^')"
+ARIANG_LASTEST="$(curl -q -LSsf "https://api.github.com/repos/mayswind/AriaNg/releases" | jq -rc '.[].tag_name' | sort -rV | head -n1 | grep '^' || false)"
 ARIANG_ARCHIVE_FILE="https://github.com/mayswind/AriaNg/releases/download/${ARIANG_LASTEST:-$ARIANG_VERSION}/AriaNg-${ARIANG_LASTEST:-$ARIANG_VERSION}.zip"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Predefined actions
-[ -d "/usr/local/share/ariang" ] || mkdir -p "/usr/local/share/ariang"
+[ -d "$ARIANG_HOME" ] || mkdir -p "$ARIANG_HOME"
 if curl -q -LSsf "$ARIANG_ARCHIVE_FILE" -o "$ARIANG_TEMP_FILE"; then
-  unzip -qq "$ARIANG_TEMP_FILE" -d "/usr/local/share/ariang"
+  unzip -qq "$ARIANG_TEMP_FILE" -d "$ARIANG_HOME"
   exitCode=$?
 else
   exitCode=9
