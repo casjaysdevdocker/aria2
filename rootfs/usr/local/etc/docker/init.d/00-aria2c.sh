@@ -224,6 +224,7 @@ __update_conf_files() {
   local get_data_dir="$(grep -Rs 'dir=' "/config/aria2/aria2.conf" | awk -F'=' '{print $2}')"
   local get_config="$(find "$WWW_ROOT_DIR/js" -name 'aria-ng-*.min.js' | grep -v 'f1dd57abb9.min' | head -n1)"
   local get_session_file="$(grep -Rs 'aria2.session' "/config/aria2/aria2.conf" | awk -F'=' '{print $2}' | head -n1)"
+  local dht_port="$DHT_LISTEN_PORT"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # delete files
   #__rm ""
@@ -249,6 +250,15 @@ __update_conf_files() {
     __replace "rpc-secret=" "#rpc-secret=" "$CONF_DIR/aria2.conf"
     __replace "REPLACE_RPC_SECRET" "" "$CONF_DIR/aria-ng.config.js"
   fi
+  if [ -n "$dht_port" ]; then
+    sed -i "s@^\(listen-port=\).*@\1$dht_port@" "$CONF_DIR/aria2.conf"
+    sed -i "s@^\(dht-listen-port=\).*@\1$dht_port@" "$CONF_DIR/aria2.conf"
+  fi
+  sed -i "s@\(move-log=\).*@\1$LOG_DIR/move.log@" "$CONF_DIR/aria2.conf"
+  sed -i "s@\(upload-log=\).*@\1$LOG_DIR/upload.log@" "$CONF_DIR/aria2.conf"
+  if [ -n "$FILE_ALLOCATION" ]; then
+    sed -i "s@^\(file-allocation=\).*@\1${FILE_ALLOCATION}@" "$CONF_DIR/aria2.conf"
+  fi
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # define actions
   [ -n "$get_session_file" ] && touch "$get_session_file"
@@ -262,6 +272,7 @@ __update_conf_files() {
     fi
     cp -Rf "$CONF_DIR/aria-ng.config.js" "$WWW_ROOT_DIR/js/aria-ng-f1dd57abb9.min.js"
   fi
+  /usr/local/bin/tracker.sh "$CONF_DIR/aria2.conf" "$CUSTOM_TRACKER_URL"
   # allow custom functions
   if builtin type -t __update_conf_files_local | grep -q 'function'; then __update_conf_files_local; fi
   # exit function
