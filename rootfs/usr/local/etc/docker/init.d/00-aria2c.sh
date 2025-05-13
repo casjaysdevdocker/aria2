@@ -200,7 +200,10 @@ __run_pre_execute_checks() {
   __banner "$pre_execute_checks_MessageST"
   # Put command to execute in parentheses
   {
-    /usr/local/bin/tracker.sh "$CONF_DIR/aria2.conf" "$CUSTOM_TRACKER_URL"
+    echo "--------------------[BitTorrent Trackers]--------------------"
+    /usr/local/bin/tracker.sh "$CONF_DIR/aria2.conf" "$CUSTOM_TRACKER_URL" | tee "$LOG_DIR/trackers.log" >/dev/null
+    echo "-----------------[End of Trackers Scripts]--------------------"
+    true
   }
   exitStatus=$?
   __banner "$pre_execute_checks_MessageEnd: Status $exitStatus"
