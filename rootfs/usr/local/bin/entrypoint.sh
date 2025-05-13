@@ -12,8 +12,8 @@
 # @@Description      :  Entrypoint file for aria2
 # @@Changelog        :  New script
 # @@TODO             :  Better documentation
-# @@Other            :  
-# @@Resource         :  
+# @@Other            :
+# @@Resource         :
 # @@Terminal App     :  no
 # @@sudo/root        :  no
 # @@Template         :  other/docker-entrypoint
@@ -81,7 +81,7 @@ SERVICE_UID="${SERVICE_UID:-0}" # set the user id
 SERVICE_GID="${SERVICE_GID:-0}" # set the group id
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # User and group in which the service switches to - IE: nginx,apache,mysql,postgres
-SERVICE_USER="${SERVICE_USER:-$aria2}"  # execute command as another user
+SERVICE_USER="${SERVICE_USER:-aria2}"   # execute command as another user
 SERVICE_GROUP="${SERVICE_GROUP:-aria2}" # Set the service group
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Secondary ports
@@ -410,6 +410,18 @@ init)
   shift 1
   echo "Container has been Initialized"
   exit 0
+  ;;
+tail)
+  shift 1
+  case "$1" in
+  app)
+    shift 1
+    tail -f /data/logs/*/*.log
+    ;;
+  *)
+    tail -f "${@:-/dev/null}"
+    ;;
+  esac
   ;;
 logs)
   shift 1
