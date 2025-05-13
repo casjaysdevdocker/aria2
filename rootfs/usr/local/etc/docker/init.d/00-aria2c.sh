@@ -223,7 +223,7 @@ __update_conf_files() {
   local sysname="${SERVER_NAME:-${FULL_DOMAIN_NAME:-$HOSTNAME}}" # set hostname
   local get_data_dir="$(grep -Rs 'dir=' "/config/aria2/aria2.conf" | awk -F'=' '{print $2}')"
   local get_config="$(find "$WWW_ROOT_DIR/js" -name 'aria-ng-*.min.js' | grep -v 'f1dd57abb9.min' | head -n1)"
-
+  local get_session_file="$(grep -Rs 'aria2.session' "/config/aria2/aria2.conf" | awk -F'=' '{print $2}' | head -n1)"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # delete files
   #__rm ""
@@ -251,6 +251,7 @@ __update_conf_files() {
   fi
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # define actions
+  [ -n "$get_session_file" ] && touch "$get_session_file"
   if [ -n "$get_data_dir" ]; then
     [ -d "$get_data_dir" ] || mkdir -p "$get_data_dir"
   fi
