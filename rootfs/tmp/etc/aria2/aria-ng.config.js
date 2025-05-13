@@ -497,8 +497,8 @@
     angular
       .module('ariaNg')
       .constant('ariaNgConstants', {
-        title: 'AriaNg',
-        appPrefix: 'AriaNg',
+        title: 'Aria',
+        appPrefix: '',
         optionStorageKey: 'Options',
         languageStorageKeyPrefix: 'Language',
         settingHistoryKeyPrefix: 'History',
