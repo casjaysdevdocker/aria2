@@ -200,7 +200,7 @@ __run_pre_execute_checks() {
   __banner "$pre_execute_checks_MessageST"
   # Put command to execute in parentheses
   {
-    true
+    /usr/local/bin/tracker.sh "$CONF_DIR/aria2.conf" "$CUSTOM_TRACKER_URL"
   }
   exitStatus=$?
   __banner "$pre_execute_checks_MessageEnd: Status $exitStatus"
@@ -272,7 +272,6 @@ __update_conf_files() {
     fi
     cp -Rf "$CONF_DIR/aria-ng.config.js" "$WWW_ROOT_DIR/js/aria-ng-f1dd57abb9.min.js"
   fi
-  /usr/local/bin/tracker.sh "$CONF_DIR/aria2.conf" "$CUSTOM_TRACKER_URL"
   # allow custom functions
   if builtin type -t __update_conf_files_local | grep -q 'function'; then __update_conf_files_local; fi
   # exit function
