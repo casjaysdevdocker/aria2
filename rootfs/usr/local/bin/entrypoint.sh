@@ -55,25 +55,6 @@ case "$1" in
   echo ""
   exit 0
   ;;
-tail)
-  shift 1
-  case "$1" in
-  null)
-    shift $#
-    tail -f "/dev/null"
-    ;;
-  app)
-    shift $#
-    tail -f /data/logs/*/*.log
-    ;;
-  -*)
-    tail "$@"
-    ;;
-  *)
-    tail -f "${@:-/dev/null}"
-    ;;
-  esac
-  ;;
 -*)
   shift
   ;;
@@ -412,7 +393,7 @@ __run_message
 START_SERVICES="${START_SERVICES:-SYSTEM_INIT}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Start all services if no pidfile
-if [ "$START_SERVICES" = "yes" ] && [ "$1" != "backup" ] && [ "$1" != "healthcheck" ] && [ "$1" != "cron" ] && [ "$1" != "logs" ] && [ "$1" != "cron" ]; then
+if [ "$START_SERVICES" = "yes" ] && [ "$1" != "backup" ] && [ "$1" != "healthcheck" ] && [ "$1" != "cron" ] && [ "$1" != "tail" ] && [ "$1" != "logs" ] && [ "$1" != "cron" ]; then
   [ "$1" = "start" ] && shift 1
   [ "$1" = "all" ] && shift 1
   [ "$1" = "init" ] && export CONTAINER_INIT="yes"

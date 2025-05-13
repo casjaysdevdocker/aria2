@@ -15,7 +15,7 @@ ARG USER="root"
 ARG SHELL_OPTS="set -e -o pipefail"
 
 ARG SERVICE_PORT="80"
-ARG EXPOSE_PORTS="6800"
+ARG EXPOSE_PORTS="6800 6888"
 ARG PHP_VERSION="system"
 ARG NODE_VERSION="system"
 ARG NODE_MANAGER="system"
@@ -252,6 +252,5 @@ VOLUME [ "/config","/data" ]
 
 EXPOSE ${SERVICE_PORT} ${ENV_PORTS}
 
-CMD [ "tail" ]
 ENTRYPOINT [ "tini","--","/usr/local/bin/entrypoint.sh" ]
 HEALTHCHECK --start-period=10m --interval=5m --timeout=15s CMD [ "/usr/local/bin/entrypoint.sh", "healthcheck" ]
