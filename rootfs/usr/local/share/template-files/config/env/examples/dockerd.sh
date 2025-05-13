@@ -1,6 +1,4 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# cerbot
-SSL_CERT_BOT="${SSL_CERT_BOT:-false}"
-CERT_BOT_MAIL="${CERT_BOT_MAIL:-}"
-CERTBOT_DOMAINS="${CERTBOT_DOMAINS:-}"
+# docker env
+DOCKER_HOST="${DOCKER_HOST:-unix://var/run/docker.sock}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
