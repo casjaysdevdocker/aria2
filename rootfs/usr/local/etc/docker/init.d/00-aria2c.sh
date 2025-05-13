@@ -241,21 +241,21 @@ __update_conf_files() {
   # replace variables
   __replace "REPLACE_RPC_PORT" "$rpc_port" "$CONF_DIR/aria2.conf"
   __replace "REPLACE_SERVER_ADDR" "$CONTAINER_IP4_ADDRESS" "$CONF_DIR/aria-ng.config.js"
-  if [ -n "$RPC_SECRET" ]; then
-    echo "Changing rpc secret to $RPC_SECRET"
-    secret_secret_rpc_base64="$(echo -n "$RPC_SECRET" | base64 -w 0)"
-    if grep -sq "rpc-secret=" "$CONF_DIR/aria2.conf"; then
-      __replace "#rpc-secret=" "rpc-secret=" "$CONF_DIR/aria2.conf"
-      __replace "REPLACE_RPC_SECRET" "$RPC_SECRET" "$CONF_DIR/aria2.conf"
-      echo "$secret_rpc_base64 >$CONF_DIR/aria-ng.config.js"
-      __replace "REPLACE_RPC_SECRET" "$secret_rpc_base64" "$CONF_DIR/aria-ng.config.js"
-    else
-      echo "rpc-secret=$RPC_SECRET" >>"$CONF_DIR/aria2.conf"
-    fi
-  else
-    __replace "rpc-secret=" "#rpc-secret=" "$CONF_DIR/aria2.conf"
-    __replace "REPLACE_RPC_SECRET" "" "$CONF_DIR/aria-ng.config.js"
-  fi
+  # if [ -n "$RPC_SECRET" ]; then
+  #   echo "Changing rpc secret to $RPC_SECRET"
+  #   secret_secret_rpc_base64="$(echo -n "$RPC_SECRET" | base64 -w 0)"
+  #   if grep -sq "rpc-secret=" "$CONF_DIR/aria2.conf"; then
+  #     __replace "#rpc-secret=" "rpc-secret=" "$CONF_DIR/aria2.conf"
+  #     __replace "REPLACE_RPC_SECRET" "$RPC_SECRET" "$CONF_DIR/aria2.conf"
+  #     echo "Setting $secret_rpc_base64 in $CONF_DIR/aria-ng.config.js"
+  #     __replace "REPLACE_RPC_SECRET" "$secret_rpc_base64" "$CONF_DIR/aria-ng.config.js"
+  #   else
+  #     echo "rpc-secret=$RPC_SECRET" >>"$CONF_DIR/aria2.conf"
+  #   fi
+  # else
+  __replace "rpc-secret=" "#rpc-secret=" "$CONF_DIR/aria2.conf"
+  __replace "REPLACE_RPC_SECRET" "" "$CONF_DIR/aria-ng.config.js"
+  # fi
   if [ -n "$dht_port" ]; then
     sed -i "s@^\(listen-port=\).*@\1$dht_port@" "$CONF_DIR/aria2.conf"
     sed -i "s@^\(dht-listen-port=\).*@\1$dht_port@" "$CONF_DIR/aria2.conf"
