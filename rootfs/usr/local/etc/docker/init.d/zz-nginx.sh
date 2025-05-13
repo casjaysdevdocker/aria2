@@ -221,6 +221,7 @@ __run_pre_execute_checks() {
 __update_conf_files() {
   local exitCode=0                                               # default exit code
   local sysname="${SERVER_NAME:-${FULL_DOMAIN_NAME:-$HOSTNAME}}" # set hostname
+  local rpc_port="${RPC_PORT:-${RPC_LISTEN:-6800}}"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # delete files
   #__rm ""
@@ -230,10 +231,8 @@ __update_conf_files() {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # replace variables
-  # __replace "" "" "$CONF_DIR/nginx.conf"
-  # replace variables recursively
-  # __find_replace "" "" "$CONF_DIR"
-
+  __replace "REPLACE_RPC_PORT" "$rpc_port" "$CONF_DIR/nginx.conf"
+  __replace "REPLACE_SERVER_ADDR" "$CONTAINER_IP4_ADDRESS" "$CONF_DIR/nginx.conf"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # define actions
 

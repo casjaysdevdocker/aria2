@@ -525,7 +525,7 @@
         browserNotification: !1,
         rpcAlias: 'aria2',
         rpcHost: 'REPLACE_SERVER_ADDR',
-        rpcPort: 'REPLACE_SERVER_PORT',
+        rpcPort: '80',
         rpcInterface: 'jsonrpc',
         protocol: 'http',
         httpMethod: 'POST',
@@ -2712,59 +2712,61 @@
                 );
               })(a.url, a)
             : 0 === t.indexOf('/settings/rpc/set')
-            ? (function (e, t, a, n, i) {
-                if (
-                  ((a = a || l.rpcPort),
-                  (n = n || l.rpcInterface),
-                  (i = i || l.secret),
-                  u.info(
-                    '[CommandController] set rpc: ' +
-                      e +
-                      '://' +
-                      t +
-                      ':' +
-                      a +
-                      '/' +
-                      n +
-                      ', secret: ' +
-                      i
-                  ),
-                  !e ||
-                    ('http' !== e &&
-                      'https' !== e &&
-                      'ws' !== e &&
-                      'wss' !== e))
-                )
-                  return d.showError('Protocol is invalid!'), !1;
-                if (!t) return d.showError('RPC host cannot be empty!'), !1;
-                if (i)
-                  try {
-                    i = c.base64UrlDecode(i);
-                  } catch (e) {
-                    return d.showError('RPC secret is not base64 encoded!'), !1;
-                  }
-                var s = {
-                  rpcAlias: '',
-                  rpcHost: t,
-                  rpcPort: a,
-                  rpcInterface: n,
-                  protocol: e,
-                  httpMethod: l.httpMethod,
-                  secret: i,
-                };
-                return (
-                  p.isRpcSettingEqualsDefault(s)
-                    ? r.path('/downloading')
-                    : (p.setDefaultRpcSetting(s, {
-                        keepCurrent: !1,
-                        forceSet: !0,
-                      }),
-                      r.path('/downloading'),
-                      o.location.reload()),
-                  !0
-                );
-              })(a.protocol, a.host, a.port, a.interface, a.secret)
-            : (d.showError('Parameter is invalid!'), 0)) ||
+              ? (function (e, t, a, n, i) {
+                  if (
+                    ((a = a || l.rpcPort),
+                    (n = n || l.rpcInterface),
+                    (i = i || l.secret),
+                    u.info(
+                      '[CommandController] set rpc: ' +
+                        e +
+                        '://' +
+                        t +
+                        ':' +
+                        a +
+                        '/' +
+                        n +
+                        ', secret: ' +
+                        i
+                    ),
+                    !e ||
+                      ('http' !== e &&
+                        'https' !== e &&
+                        'ws' !== e &&
+                        'wss' !== e))
+                  )
+                    return d.showError('Protocol is invalid!'), !1;
+                  if (!t) return d.showError('RPC host cannot be empty!'), !1;
+                  if (i)
+                    try {
+                      i = c.base64UrlDecode(i);
+                    } catch (e) {
+                      return (
+                        d.showError('RPC secret is not base64 encoded!'), !1
+                      );
+                    }
+                  var s = {
+                    rpcAlias: '',
+                    rpcHost: t,
+                    rpcPort: a,
+                    rpcInterface: n,
+                    protocol: e,
+                    httpMethod: l.httpMethod,
+                    secret: i,
+                  };
+                  return (
+                    p.isRpcSettingEqualsDefault(s)
+                      ? r.path('/downloading')
+                      : (p.setDefaultRpcSetting(s, {
+                          keepCurrent: !1,
+                          forceSet: !0,
+                        }),
+                        r.path('/downloading'),
+                        o.location.reload()),
+                    !0
+                  );
+                })(a.protocol, a.host, a.port, a.interface, a.secret)
+              : (d.showError('Parameter is invalid!'), 0)) ||
             r.path('/downloading');
       },
     ]);
@@ -2920,8 +2922,8 @@
                             ? r.path('/waiting')
                             : o.reload())
                         : '/waiting' === r.path()
-                        ? r.path('/downloading')
-                        : o.reload());
+                          ? r.path('/downloading')
+                          : o.reload());
                 },
                 1 < a.length
               );
@@ -2946,8 +2948,8 @@
                             ? r.path('/downloading')
                             : o.reload()
                           : 'task-detail' === t
-                          ? r.path('/task/detail/' + e.data)
-                          : o.reload());
+                            ? r.path('/task/detail/' + e.data)
+                            : o.reload());
                     } else p.showError('Failed to retry this task.');
                   },
                   !1
@@ -3225,8 +3227,8 @@
                     'task-detail' === p.getAfterCreatingNewTask() && t && t.data
                       ? d.path('/task/detail/' + t.data)
                       : a
-                      ? d.path('/waiting')
-                      : d.path('/downloading');
+                        ? d.path('/waiting')
+                        : d.path('/downloading');
                 }
               };
             'urls' === c.context.taskType
@@ -3245,25 +3247,25 @@
                   return f(n), g.newUriTasks(i, e, t);
                 })(a, r))
               : 'torrent' === c.context.taskType
-              ? (l.loadPromise =
-                  ((i = a),
-                  (s = r),
-                  (o = {
-                    content: c.context.uploadFile.base64Content,
-                    options: angular.copy(c.context.options),
-                  }),
-                  f(o.options),
-                  g.newTorrentTask(o, i, s)))
-              : 'metalink' === c.context.taskType &&
-                (l.loadPromise =
-                  ((e = a),
-                  (t = r),
-                  (n = {
-                    content: c.context.uploadFile.base64Content,
-                    options: angular.copy(c.context.options),
-                  }),
-                  f(n.options),
-                  g.newMetalinkTask(n, e, t)));
+                ? (l.loadPromise =
+                    ((i = a),
+                    (s = r),
+                    (o = {
+                      content: c.context.uploadFile.base64Content,
+                      options: angular.copy(c.context.options),
+                    }),
+                    f(o.options),
+                    g.newTorrentTask(o, i, s)))
+                : 'metalink' === c.context.taskType &&
+                  (l.loadPromise =
+                    ((e = a),
+                    (t = r),
+                    (n = {
+                      content: c.context.uploadFile.base64Content,
+                      options: angular.copy(c.context.options),
+                    }),
+                    f(n.options),
+                    g.newMetalinkTask(n, e, t)));
           }),
           (c.setOption = function (e, t, a) {
             '' !== t ? (c.context.options[e] = t) : delete c.context.options[e],
@@ -3435,8 +3437,8 @@
                   ('le102400' === a
                     ? t.numPieces <= 102400
                     : 'le10240' === a
-                    ? t.numPieces <= 10240
-                    : 'le1024' !== a || t.numPieces <= 1024))),
+                      ? t.numPieces <= 10240
+                      : 'le1024' !== a || t.numPieces <= 1024))),
               v('pieces', g.context.showPiecesInfo),
               v('btpeers', 'active' === e.status && e.bittorrent),
               (g.task && g.task.status === e.status) ||
@@ -3644,8 +3646,8 @@
                   ('all' === e
                     ? (a.selected = !0)
                     : 'none' === e
-                    ? (a.selected = !1)
-                    : 'reverse' === e && (a.selected = !a.selected));
+                      ? (a.selected = !1)
+                      : 'reverse' === e && (a.selected = !a.selected));
               }
               C();
             }
@@ -4653,23 +4655,23 @@
                   return 'success' === a
                     ? 'has-success'
                     : 'failed' === a
-                    ? 'has-warning'
-                    : 'error' === a
-                    ? 'has-error'
-                    : '';
+                      ? 'has-warning'
+                      : 'error' === a
+                        ? 'has-error'
+                        : '';
                 },
                 getStatusIcon: function () {
                   return 'pending' === a
                     ? 'fa-hourglass-start'
                     : 'saving' === a
-                    ? 'fa-spin fa-pulse fa-spinner'
-                    : 'success' === a
-                    ? 'fa-check'
-                    : 'failed' === a
-                    ? 'fa-exclamation'
-                    : 'error' === a
-                    ? 'fa-times'
-                    : '';
+                      ? 'fa-spin fa-pulse fa-spinner'
+                      : 'success' === a
+                        ? 'fa-check'
+                        : 'failed' === a
+                          ? 'fa-exclamation'
+                          : 'error' === a
+                            ? 'fa-times'
+                            : '';
                 },
                 isShowStatusIcon: function () {
                   return '' !== this.getStatusIcon();
@@ -4956,16 +4958,16 @@
           return null === a
             ? e
             : 'index' === a.type
-            ? n('orderBy')(e, ['index'], a.reverse)
-            : 'name' === a.type
-            ? n('orderBy')(e, ['fileName'], a.reverse)
-            : 'size' === a.type
-            ? n('orderBy')(e, ['length'], a.reverse)
-            : 'percent' === a.type
-            ? n('orderBy')(e, ['completePercent'], a.reverse)
-            : 'selected' === a.type
-            ? n('orderBy')(e, ['selected'], a.reverse)
-            : e;
+              ? n('orderBy')(e, ['index'], a.reverse)
+              : 'name' === a.type
+                ? n('orderBy')(e, ['fileName'], a.reverse)
+                : 'size' === a.type
+                  ? n('orderBy')(e, ['length'], a.reverse)
+                  : 'percent' === a.type
+                    ? n('orderBy')(e, ['completePercent'], a.reverse)
+                    : 'selected' === a.type
+                      ? n('orderBy')(e, ['selected'], a.reverse)
+                      : e;
         };
       },
     ]);
@@ -4995,16 +4997,16 @@
           return null === a
             ? e
             : 'address' === a.type
-            ? n('orderBy')(e, ['ip', 'port'], a.reverse)
-            : 'client' === a.type
-            ? n('orderBy')(e, ['client.name', 'client.version'], a.reverse)
-            : 'percent' === a.type
-            ? n('orderBy')(e, ['completePercent'], a.reverse)
-            : 'dspeed' === a.type
-            ? n('orderBy')(e, ['downloadSpeed'], a.reverse)
-            : 'uspeed' === a.type
-            ? n('orderBy')(e, ['uploadSpeed'], a.reverse)
-            : e;
+              ? n('orderBy')(e, ['ip', 'port'], a.reverse)
+              : 'client' === a.type
+                ? n('orderBy')(e, ['client.name', 'client.version'], a.reverse)
+                : 'percent' === a.type
+                  ? n('orderBy')(e, ['completePercent'], a.reverse)
+                  : 'dspeed' === a.type
+                    ? n('orderBy')(e, ['downloadSpeed'], a.reverse)
+                    : 'uspeed' === a.type
+                      ? n('orderBy')(e, ['uploadSpeed'], a.reverse)
+                      : e;
         };
       },
     ]);
@@ -5042,18 +5044,22 @@
           return null === a
             ? e
             : 'name' === a.type
-            ? n('orderBy')(e, ['taskName'], a.reverse)
-            : 'size' === a.type
-            ? n('orderBy')(e, ['totalLength'], a.reverse)
-            : 'percent' === a.type
-            ? n('orderBy')(e, ['completePercent'], a.reverse)
-            : 'remain' === a.type
-            ? n('orderBy')(e, ['idle', 'remainTime', 'remainLength'], a.reverse)
-            : 'dspeed' === a.type
-            ? n('orderBy')(e, ['downloadSpeed'], a.reverse)
-            : 'uspeed' === a.type
-            ? n('orderBy')(e, ['uploadSpeed'], a.reverse)
-            : e;
+              ? n('orderBy')(e, ['taskName'], a.reverse)
+              : 'size' === a.type
+                ? n('orderBy')(e, ['totalLength'], a.reverse)
+                : 'percent' === a.type
+                  ? n('orderBy')(e, ['completePercent'], a.reverse)
+                  : 'remain' === a.type
+                    ? n('orderBy')(
+                        e,
+                        ['idle', 'remainTime', 'remainLength'],
+                        a.reverse
+                      )
+                    : 'dspeed' === a.type
+                      ? n('orderBy')(e, ['downloadSpeed'], a.reverse)
+                      : 'uspeed' === a.type
+                        ? n('orderBy')(e, ['uploadSpeed'], a.reverse)
+                        : e;
         };
       },
     ]);
@@ -5067,25 +5073,25 @@
             ? e.verifyIntegrityPending
               ? 'Pending Verification'
               : e.verifiedLength
-              ? e.verifiedPercent
-                ? 'format.task.verifying-percent'
-                : 'Verifying'
-              : !0 === e.seeder || 'true' === e.seeder
-              ? 'Seeding'
-              : 'Downloading'
+                ? e.verifiedPercent
+                  ? 'format.task.verifying-percent'
+                  : 'Verifying'
+                : !0 === e.seeder || 'true' === e.seeder
+                  ? 'Seeding'
+                  : 'Downloading'
             : 'waiting' === e.status
-            ? 'Waiting'
-            : 'paused' === e.status
-            ? 'Paused'
-            : t || 'complete' !== e.status
-            ? t || 'error' !== e.status
-              ? t || 'removed' !== e.status
-                ? ''
-                : 'Removed'
-              : e.errorCode
-              ? 'format.task.error-occurred'
-              : 'Error Occurred'
-            : 'Completed'
+              ? 'Waiting'
+              : 'paused' === e.status
+                ? 'Paused'
+                : t || 'complete' !== e.status
+                  ? t || 'error' !== e.status
+                    ? t || 'removed' !== e.status
+                      ? ''
+                      : 'Removed'
+                    : e.errorCode
+                      ? 'format.task.error-occurred'
+                      : 'Error Occurred'
+                  : 'Completed'
           : '';
       };
     });
@@ -5448,16 +5454,16 @@
                     ? 'format.time.millisecond'
                     : 'format.time.milliseconds'
                   : i < 6e4
-                  ? 1 === (o = i / 1e3)
-                    ? 'format.time.second'
-                    : 'format.time.seconds'
-                  : i < 144e4
-                  ? 1 === (o = i / 1e3 / 60)
-                    ? 'format.time.minute'
-                    : 'format.time.minutes'
-                  : 1 === (o = i / 1e3 / 60 / 24)
-                  ? 'format.time.hour'
-                  : 'format.time.hours'),
+                    ? 1 === (o = i / 1e3)
+                      ? 'format.time.second'
+                      : 'format.time.seconds'
+                    : i < 144e4
+                      ? 1 === (o = i / 1e3 / 60)
+                        ? 'format.time.minute'
+                        : 'format.time.minutes'
+                      : 1 === (o = i / 1e3 / 60 / 24)
+                        ? 'format.time.hour'
+                        : 'format.time.hours'),
                 a.push({ name: s, value: o, optionValue: i });
             }
             return a;
@@ -7984,18 +7990,18 @@
             return 'basic' === e
               ? t.basicOptions
               : 'http-ftp-sftp' === e
-              ? t.httpFtpSFtpOptions
-              : 'http' === e
-              ? t.httpOptions
-              : 'ftp-sftp' === e
-              ? t.ftpSFtpOptions
-              : 'bt' === e
-              ? t.btOptions
-              : 'metalink' === e
-              ? t.metalinkOptions
-              : 'rpc' === e
-              ? t.rpcOptions
-              : 'advanced' === e && t.advancedOptions;
+                ? t.httpFtpSFtpOptions
+                : 'http' === e
+                  ? t.httpOptions
+                  : 'ftp-sftp' === e
+                    ? t.ftpSFtpOptions
+                    : 'bt' === e
+                      ? t.btOptions
+                      : 'metalink' === e
+                        ? t.metalinkOptions
+                        : 'rpc' === e
+                          ? t.rpcOptions
+                          : 'advanced' === e && t.advancedOptions;
           },
           getAria2QuickSettingsAvailableOptions: function (e) {
             return 'globalSpeedLimit' === e && a.globalSpeedLimitOptions;

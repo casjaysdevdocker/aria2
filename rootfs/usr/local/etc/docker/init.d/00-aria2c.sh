@@ -224,6 +224,7 @@ __update_conf_files() {
   local get_data_dir="$(grep -Rs 'dir=' "/config/aria2/aria2.conf" | awk -F'=' '{print $2}')"
   local get_config="$(find "$WWW_ROOT_DIR/js" -name 'aria-ng-*.min.js' | grep -v 'f1dd57abb9.min' | head -n1)"
   local get_session_file="$(grep -Rs 'aria2.session' "/config/aria2/aria2.conf" | awk -F'=' '{print $2}' | head -n1)"
+  local rpc_port="${RPC_PORT:-${RPC_LISTEN:-6800}}"
   local dht_port="$DHT_LISTEN_PORT"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # delete files
@@ -234,8 +235,7 @@ __update_conf_files() {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # replace variables
-  __replace "REPLACE_RPC_PORT" "$SERVICE_PORT" "$CONF_DIR/aria2.conf"
-  __replace "REPLACE_SERVER_PORT" "$SERVICE_PORT" "$CONF_DIR/aria-ng.config.js"
+  __replace "REPLACE_RPC_PORT" "$rpc_port" "$CONF_DIR/aria2.conf"
   __replace "REPLACE_SERVER_ADDR" "$CONTAINER_IP4_ADDRESS" "$CONF_DIR/aria-ng.config.js"
   if [ -n "$RPC_SECRET" ]; then
     echo "Changing rpc secret to $RPC_SECRET"
