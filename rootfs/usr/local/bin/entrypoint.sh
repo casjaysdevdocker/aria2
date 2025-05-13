@@ -51,9 +51,28 @@ case "$1" in
 -h | --help)
   shift 1
   echo 'Docker container for '$CONTAINER_NAME''
-  echo "Usage: $CONTAINER_NAME [cron exec start init shell certbot ssl procs ports healthcheck backup command]"
+  echo "Usage: $CONTAINER_NAME [help tail cron exec start init shell certbot ssl procs ports healthcheck backup command]"
   echo ""
   exit 0
+  ;;
+tail)
+  shift 1
+  case "$1" in
+  null)
+    shift $#
+    tail -f "/dev/null"
+    ;;
+  app)
+    shift $#
+    tail -f /data/logs/*/*.log
+    ;;
+  -*)
+    tail "$@"
+    ;;
+  *)
+    tail -f "${@:-/dev/null}"
+    ;;
+  esac
   ;;
 -*)
   shift
@@ -410,18 +429,6 @@ init)
   shift 1
   echo "Container has been Initialized"
   exit 0
-  ;;
-tail)
-  shift 1
-  case "$1" in
-  app)
-    shift 1
-    tail -f /data/logs/*/*.log
-    ;;
-  *)
-    tail -f "${@:-/dev/null}"
-    ;;
-  esac
   ;;
 logs)
   shift 1
