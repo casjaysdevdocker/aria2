@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202505131551-git
+##@Version           :  202509161146-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.pro
-# @@License          :  WTFPL
+# @@License          :  LICENSE.md
 # @@ReadME           :  entrypoint.sh --help
 # @@Copyright        :  Copyright: (c) 2025 Jason Hempstead, Casjays Developments
-# @@Created          :  Tuesday, May 13, 2025 15:51 EDT
+# @@Created          :  Tuesday, Sep 16, 2025 11:46 EDT
 # @@File             :  entrypoint.sh
 # @@Description      :  Entrypoint file for aria2
 # @@Changelog        :  New script
 # @@TODO             :  Better documentation
-# @@Other            :
-# @@Resource         :
+# @@Other            :  
+# @@Resource         :  
 # @@Terminal App     :  no
 # @@sudo/root        :  no
 # @@Template         :  other/docker-entrypoint
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# shellcheck disable=SC1003,SC2016,SC2031,SC2120,SC2155,SC2199,SC2317
+# shellcheck disable=SC1001,SC1003,SC2001,SC2003,SC2016,SC2031,SC2120,SC2155,SC2199,SC2317,SC2329
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+set -e
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# run trap command on exit
+trap 'echo "❌ Fatal error, killing container"; kill -TERM 1' ERR
+trap 'retVal=$?;[ "$SERVICE_IS_RUNNING" != "yes" ] && [ -f "$SERVICE_PID_FILE" ] && rm -Rf "$SERVICE_PID_FILE";exit $retVal' SIGINT SIGTERM SIGPWR
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # setup debugging - https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html
 [ -f "/config/.debug" ] && [ -z "$DEBUGGER_OPTIONS" ] && export DEBUGGER_OPTIONS="$(<"/config/.debug")" || DEBUGGER_OPTIONS="${DEBUGGER_OPTIONS:-}"
@@ -81,7 +87,7 @@ SERVICE_UID="${SERVICE_UID:-0}" # set the user id
 SERVICE_GID="${SERVICE_GID:-0}" # set the group id
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # User and group in which the service switches to - IE: nginx,apache,mysql,postgres
-SERVICE_USER="${SERVICE_USER:-aria2}"   # execute command as another user
+SERVICE_USER="${SERVICE_USER:-$aria2}"  # execute command as another user
 SERVICE_GROUP="${SERVICE_GROUP:-aria2}" # Set the service group
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Secondary ports
@@ -92,7 +98,7 @@ WEB_SERVER_PORT="" # port : 80,443
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Healthcheck variables
 HEALTH_ENABLED="yes" # enable healthcheck [yes/no]
-SERVICES_LIST="tini,aria2c,zz-nginx"
+SERVICES_LIST="tini" # comma seperated list of processes for the healthcheck
 HEALTH_ENDPOINTS=""  # url endpoints: [http://localhost/health,http://localhost/test]
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Update path var
@@ -253,6 +259,8 @@ if [ -f "$ENTRYPOINT_PID_FILE" ]; then
   touch "$ENTRYPOINT_PID_FILE"
 else
   echo "$$" >"$ENTRYPOINT_PID_FILE"
+  # Clean any stale PID files on first run
+  rm -f /run/init.d/*.pid 2>/dev/null || true
 fi
 if [ -f "$ENTRYPOINT_INIT_FILE" ]; then
   ENTRYPOINT_MESSAGE="no" ENTRYPOINT_FIRST_RUN="no"
@@ -365,12 +373,12 @@ if [ "$ENTRYPOINT_FIRST_RUN" != "no" ]; then
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # if no pid assume container restart - clean stale files on restart
-if [ ! -f "$ENTRYPOINT_PID_FILE" ]; then 
+if [ ! -f "$ENTRYPOINT_PID_FILE" ]; then
   START_SERVICES="yes"
   # Clean stale pid files from previous container runs
-  rm -f /run/__start_init_scripts.pid /run/init.d/*.pid /run/*.pid
+  rm -f /run/__start_init_scripts.pid /run/init.d/*.pid /run/*.pid 2>/dev/null || true
 elif [ ! -f "/run/__start_init_scripts.pid" ]; then
-  START_SERVICES="yes" 
+  START_SERVICES="yes"
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 [ "$ENTRYPOINT_MESSAGE" = "yes" ] && __printf_space "40" "Container ip address is:" "$CONTAINER_IP4_ADDRESS"
@@ -416,6 +424,25 @@ init)
   shift 1
   echo "Container has been Initialized"
   exit 0
+  ;;
+tail)
+  shift 1
+  case "$1" in
+  null)
+    shift $#
+    tail -F "/dev/null"
+    ;;
+  app)
+    shift $#
+    tail -F /data/logs/*/*.log
+    ;;
+  -*)
+    tail "$@"
+    ;;
+  *)
+    tail -F "${@:-/dev/null}"
+    ;;
+  esac
   ;;
 logs)
   shift 1
@@ -559,7 +586,6 @@ start)
     elif [ -f "/usr/local/etc/docker/init.d/$1" ]; then
       eval "/usr/local/etc/docker/init.d/$1" &
       __no_exit
-
     fi
   fi
   ;;
