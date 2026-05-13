@@ -110,8 +110,8 @@ RANDOM_PASS_ROOT=""
 #SERVICE_GID="0" # set the group id
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # execute command variables - keep single quotes variables will be expanded later
-EXEC_CMD_BIN='aria2c'                            # command to execute
-EXEC_CMD_ARGS='--conf-path=$CONF_DIR/aria2.conf' # command arguments
+EXEC_CMD_BIN='/usr/local/etc/docker/bin/start-aria2' # wrapper: bg aria2c, exec nginx
+EXEC_CMD_ARGS=''                                     # wrapper takes no args
 EXEC_PRE_SCRIPT=''                               # execute script before
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Is this service a web server

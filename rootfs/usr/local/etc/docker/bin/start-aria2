@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# casjaysdevdocker/aria2 - launches aria2c (background) then nginx (foreground).
+#
+# Single command for the framework's EXEC_CMD_BIN slot. The framework only
+# reliably runs one init.d script, so we combine both services here.
+set -e
+
+# Runtime dirs
+mkdir -p /run/aria2 /tmp/aria2 /data/logs/aria2 /data/logs/nginx \
+         /data/downloads/aria2 /config/aria2 /config/nginx
+chmod 1777 /tmp/aria2 2>/dev/null || true
+
+# Resolve binaries
+ARIA2C_BIN="$(command -v aria2c || true)"
+NGINX_BIN="$(command -v nginx || echo /usr/sbin/nginx)"
+[ -x "$ARIA2C_BIN" ] || { echo "aria2c not found in PATH" >&2; exit 2; }
+[ -x "$NGINX_BIN" ] || { echo "nginx not found at $NGINX_BIN" >&2; exit 3; }
+
+# Locate aria2.conf — prefer /config/aria2/aria2.conf (user-editable),
+# fall back to /etc/aria2/aria2.conf.
+ARIA2_CONF=""
+for c in /config/aria2/aria2.conf /etc/aria2/aria2.conf; do
+  if [ -f "$c" ]; then ARIA2_CONF="$c"; break; fi
+done
+[ -n "$ARIA2_CONF" ] || { echo "aria2.conf not found" >&2; exit 4; }
+
+# Ensure session file exists (aria2c errors if --input-file is set but missing)
+if grep -q '^input-file=' "$ARIA2_CONF" 2>/dev/null; then
+  session_file="$(grep '^input-file=' "$ARIA2_CONF" | head -1 | cut -d= -f2-)"
+  [ -n "$session_file" ] && [ ! -f "$session_file" ] && touch "$session_file" 2>/dev/null || true
+fi
+
+# Locate nginx.conf
+NGINX_CONF=""
+for c in /config/nginx/nginx.conf /etc/nginx/nginx.conf; do
+  if [ -f "$c" ]; then NGINX_CONF="$c"; break; fi
+done
+[ -n "$NGINX_CONF" ] || { echo "nginx.conf not found" >&2; exit 5; }
+
+# Start aria2c in background (only if not already running)
+if ! pgrep -x aria2c >/dev/null 2>&1; then
+  "$ARIA2C_BIN" --conf-path="$ARIA2_CONF" \
+    >>/data/logs/aria2/aria2c.log 2>>/data/logs/aria2/aria2c-err.log &
+  # wait up to 15s for the RPC port (default 6800)
+  rpc_port="$(grep '^rpc-listen-port=' "$ARIA2_CONF" 2>/dev/null | head -1 | cut -d= -f2-)"
+  rpc_port="${rpc_port:-6800}"
+  i=0
+  while ! (netstat -tnlp 2>/dev/null || ss -tnlp 2>/dev/null) | grep -q ":${rpc_port}\b" && [ $i -lt 15 ]; do
+    sleep 1
+    i=$((i + 1))
+  done
+fi
+
+# nginx in foreground (nginx.conf must have daemon off; for daemon-off mode the
+# framework's & wrapping still works — the wrapper process just stays bound to nginx).
+exec "$NGINX_BIN" -c "$NGINX_CONF"

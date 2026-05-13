@@ -19,8 +19,8 @@ dockermgr update aria2
 ## Install and run container
   
 ```shell
-dockerHome="/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/volumes"
-mkdir -p "/var/lib/srv/$USER/docker/aria2/volumes"
+dockerHome="/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/rootfs"
+mkdir -p "/var/lib/srv/$USER/docker/aria2/rootfs"
 git clone "https://github.com/dockermgr/aria2" "$HOME/.local/share/CasjaysDev/dockermgr/aria2"
 cp -Rfva "$HOME/.local/share/CasjaysDev/dockermgr/aria2/rootfs/." "$dockerHome/"
 docker run -d \
@@ -47,8 +47,8 @@ services:
       - TZ=America/New_York
       - HOSTNAME=aria2
     volumes:
-      - "/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/volumes/data:/data:z"
-      - "/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/volumes/config:/config:z"
+      - "/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/rootfs/data:/data:z"
+      - "/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/rootfs/config:/config:z"
     ports:
       - 80:80
     restart: always

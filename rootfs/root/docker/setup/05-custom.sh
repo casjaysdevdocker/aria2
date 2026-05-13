@@ -1,22 +1,17 @@
 #!/usr/bin/env bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202505131551-git
+##@Version           :  202605101200-git
 # @@Author           :  CasjaysDev
 # @@Contact          :  CasjaysDev <docker-admin@casjaysdev.pro>
 # @@License          :  MIT
 # @@ReadME           :
-# @@Copyright        :  Copyright 2023 CasjaysDev
+# @@Copyright        :  Copyright 2026 CasjaysDev
 # @@Created          :  Mon Aug 28 06:48:42 PM EDT 2023
 # @@File             :  05-custom.sh
-# @@Description      :  script to run custom
+# @@Description      :  build-time custom: install AriaNg from prebundled zip + wipe-and-replace configs
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # shellcheck shell=bash
-# shellcheck disable=SC2016
-# shellcheck disable=SC2031
-# shellcheck disable=SC2120
-# shellcheck disable=SC2155
-# shellcheck disable=SC2199
-# shellcheck disable=SC2317
+# shellcheck disable=SC2016,SC2031,SC2120,SC2155,SC2199,SC2317
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set bash options
 set -o pipefail
@@ -24,26 +19,38 @@ set -o pipefail
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set env variables
 exitCode=0
-ARIANG_TEMP_FILE="/tmp/AriaNg.zip"
 ARIANG_HOME="/usr/local/share/ariang"
-ARIANG_VERSION="${ARIANG_VERSION:-1.3.9}"
-ARIANG_LASTEST="$(curl -q -LSsf "https://api.github.com/repos/mayswind/AriaNg/releases" | jq -rc '.[].tag_name' | sort -rV | head -n1 | grep '^' || false)"
-ARIANG_ARCHIVE_FILE="https://github.com/mayswind/AriaNg/releases/download/${ARIANG_LASTEST:-$ARIANG_VERSION}/AriaNg-${ARIANG_LASTEST:-$ARIANG_VERSION}.zip"
+ARIANG_SRC_DIR="/tmp/ariang-src"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Predefined actions
+# Wipe-and-replace per-service configs (per template §4)
+for d in aria2 nginx; do
+  [ -d "/tmp/etc/$d" ] || continue
+  echo "Wiping /etc/$d and copying from /tmp/etc/$d"
+  rm -Rf "/etc/$d"/*
+  cp -Rf "/tmp/etc/$d/." "/etc/$d/"
+  # restage template-files/config so first-run seed gets the optimized config
+  mkdir -p "/usr/local/share/template-files/config/$d"
+  cp -Rf "/etc/$d/." "/usr/local/share/template-files/config/$d/"
+done
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Install AriaNg from the host-prebundled zip (buildx network can't reach github reliably)
 \rm -Rf "${ARIANG_HOME:?}"
 \mkdir -p "${ARIANG_HOME:?}"
-if curl -q -LSsf "$ARIANG_ARCHIVE_FILE" -o "$ARIANG_TEMP_FILE"; then
-  unzip -qq "$ARIANG_TEMP_FILE" -d "$ARIANG_HOME"
+ARIANG_ZIP=""
+if [ -d "$ARIANG_SRC_DIR" ]; then
+  ARIANG_ZIP="$(ls -1 "$ARIANG_SRC_DIR"/AriaNg-*.zip 2>/dev/null | head -n1 || true)"
+fi
+if [ -n "$ARIANG_ZIP" ] && [ -f "$ARIANG_ZIP" ]; then
+  echo "Extracting prebundled AriaNg: $ARIANG_ZIP -> $ARIANG_HOME"
+  unzip -qq "$ARIANG_ZIP" -d "$ARIANG_HOME"
   exitCode=$?
 else
+  echo "ERROR: AriaNg zip not found at $ARIANG_SRC_DIR/AriaNg-*.zip" >&2
+  echo "       Place AriaNg-X.Y.Z.zip from https://github.com/mayswind/AriaNg/releases there." >&2
   exitCode=9
 fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Main script
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Set the exit code
-#exitCode=$?
+# Create runtime dirs that aria2 + nginx need on first start
+mkdir -p /run/nginx /run/aria2 /data/downloads/aria2 /data/logs/aria2 /data/logs/nginx /var/log/nginx
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 exit $exitCode
