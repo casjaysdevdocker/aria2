@@ -442,7 +442,7 @@ fi
 # if no pid assume container restart - clean stale files on restart
 if [ -f "$ENTRYPOINT_PID_FILE" ]; then
   # Check if the PID in the file is still running
-  entrypoint_pid=$(cat "$ENTRYPOINT_PID_FILE" 2>/dev/null || echo "")
+  entrypoint_pid=$(<"$ENTRYPOINT_PID_FILE") 2>/dev/null
   if [ -n "$entrypoint_pid" ] && kill -0 "$entrypoint_pid" 2>/dev/null; then
     # Process is still running, don't restart services
     START_SERVICES="no"

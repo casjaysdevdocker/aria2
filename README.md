@@ -1,79 +1,101 @@
-## 👋 Welcome to aria2 🚀  
+## 👋 Welcome to aria2 🚀
 
-aria2 README  
-  
-  
-## Install my system scripts  
+A self-contained Docker image running **aria2c** (multi-protocol download daemon) with the **AriaNg** web UI served by **nginx**. Supports HTTP/HTTPS, FTP, BitTorrent, Metalink, and WebSocket RPC.
+
+---
+
+## 🚀 Quick start
 
 ```shell
- sudo bash -c "$(curl -q -LSsf "https://github.com/systemmgr/installer/raw/main/install.sh")"
- sudo systemmgr --config && sudo systemmgr install scripts  
-```
-  
-## Automatic install/update  
-  
-```shell
-dockermgr update aria2
-```
-  
-## Install and run container
-  
-```shell
-dockerHome="/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/rootfs"
-mkdir -p "/var/lib/srv/$USER/docker/aria2/rootfs"
-git clone "https://github.com/dockermgr/aria2" "$HOME/.local/share/CasjaysDev/dockermgr/aria2"
-cp -Rfva "$HOME/.local/share/CasjaysDev/dockermgr/aria2/rootfs/." "$dockerHome/"
 docker run -d \
---restart always \
---privileged \
---name casjaysdevdocker-aria2-latest \
---hostname aria2 \
--e TZ=${TIMEZONE:-America/New_York} \
--v "$dockerHome/data:/data:z" \
--v "$dockerHome/config:/config:z" \
--p 80:80 \
-casjaysdevdocker/aria2:latest
+  --restart always \
+  --name casjaysdevdocker-aria2 \
+  --hostname aria2 \
+  -e TZ=${TIMEZONE:-America/New_York} \
+  -v /srv/docker/aria2/config:/config:z \
+  -v /srv/docker/aria2/data:/data:z \
+  -p 80:80 \
+  -p 6800:6800 \
+  -p 6888:6888 \
+  casjaysdevdocker/aria2:latest
 ```
-  
-## via docker-compose  
-  
+
+Open `http://localhost` to access the AriaNg web interface.
+
+---
+
+## 🐳 docker-compose
+
 ```yaml
 version: "2"
 services:
-  ProjectName:
-    image: casjaysdevdocker/aria2
+  aria2:
+    image: casjaysdevdocker/aria2:latest
     container_name: casjaysdevdocker-aria2
+    hostname: aria2
+    restart: always
     environment:
       - TZ=America/New_York
-      - HOSTNAME=aria2
     volumes:
-      - "/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/rootfs/data:/data:z"
-      - "/var/lib/srv/$USER/docker/casjaysdevdocker/aria2/aria2/latest/rootfs/config:/config:z"
+      - /srv/docker/aria2/config:/config:z
+      - /srv/docker/aria2/data:/data:z
     ports:
-      - 80:80
-    restart: always
+      - 80:80       # AriaNg web UI + proxied RPC
+      - 6800:6800   # aria2c direct JSON-RPC / WebSocket
+      - 6888:6888   # BitTorrent peer / DHT
 ```
-  
-## Get source files  
-  
-```shell
-dockermgr download src casjaysdevdocker/aria2
-```
-  
-OR
-  
+
+---
+
+## 🔧 Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `TZ` | `America/New_York` | Container timezone |
+| `RPC_PORT` | `6800` | aria2c RPC listen port |
+| `RPC_SECRET` | _(unset)_ | aria2c RPC secret token (blank = no auth) |
+| `CUSTOM_TRACKER_URL` | _(unset)_ | URL to fetch fresh BT tracker list (P3TERX format) |
+
+---
+
+## 📁 Volumes
+
+| Path | Purpose |
+|---|---|
+| `/config` | User-editable config — `aria2/aria2.conf`, `aria2/aria2.session`, `nginx/nginx.conf`, AriaNg client config |
+| `/data` | Downloads at `/data/downloads/aria2/`; logs at `/data/logs/{aria2,nginx}/` |
+
+Seeded on first run from the image defaults. Edit `/config/aria2/aria2.conf` to tune aria2c; restart the container to apply.
+
+---
+
+## 🌐 Ports
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| `80` | TCP | AriaNg web UI (nginx); also proxies `/jsonrpc` and `/rpc` to aria2c |
+| `6800` | TCP | aria2c JSON-RPC / WebSocket (direct, bypasses nginx) |
+| `6888` | TCP/UDP | BitTorrent peer connections and DHT |
+
+---
+
+## 🔨 Build from source
+
 ```shell
 git clone "https://github.com/casjaysdevdocker/aria2" "$HOME/Projects/github/casjaysdevdocker/aria2"
-```
-  
-## Build container  
-  
-```shell
 cd "$HOME/Projects/github/casjaysdevdocker/aria2"
-buildx 
+
+# pre-bundle AriaNg (required before buildx — GitHub SSL is blocked inside the sandbox)
+mkdir -p rootfs/tmp/ariang-src
+curl -fsSL -o rootfs/tmp/ariang-src/AriaNg-1.3.13.zip \
+  https://github.com/mayswind/AriaNg/releases/download/1.3.13/AriaNg-1.3.13.zip
+
+buildx
 ```
-  
-## Authors  
-  
-🤖 casjay: [Github](https://github.com/casjay) 🤖  
-⛵ casjaysdevdocker: [Github](https://github.com/casjaysdevdocker) [Docker](https://hub.docker.com/u/casjaysdevdocker) ⛵  
+
+---
+
+## 👤 Authors
+
+🤖 casjay: [Github](https://github.com/casjay) 🤖
+⛵ casjaysdevdocker: [Github](https://github.com/casjaysdevdocker) [Docker](https://hub.docker.com/u/casjaysdevdocker) ⛵
